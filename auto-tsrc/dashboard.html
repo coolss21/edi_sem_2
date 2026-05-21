@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Auto-TSRC Interactive Pipeline Dashboard — AutoML Curriculum Distillation for Time-Series" />
+  <title>Auto-TSRC | Interactive Pipeline Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #06060f;
+      --bg2:    #0c0c1e;
+      --bg3:    #111128;
+      --card:   rgba(255,255,255,0.035);
+      --border: rgba(255,255,255,0.07);
+      --text:   #e2e8f0;
+      --dim:    #94a3b8;
+      --dimmer: #64748b;
+      --c1: #06b6d4; --c1a: rgba(6,182,212,0.15);
+      --c2: #8b5cf6; --c2a: rgba(139,92,246,0.15);
+      --c3: #f59e0b; --c3a: rgba(245,158,11,0.15);
+      --c4: #10b981; --c4a: rgba(16,185,129,0.15);
+      --c5: #f43f5e; --c5a: rgba(244,63,94,0.15);
+    }
+
+    html, body { height: 100%; overflow-x: hidden; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 15%, rgba(6,182,212,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 85%, rgba(139,92,246,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,185,129,0.03) 0%, transparent 70%);
+    }
+
+    #root { position: relative; z-index: 1; }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(6,6,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 200;
+    }
+    .logo-title {
+      font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(120deg, #06b6d4 0%, #8b5cf6 60%, #f43f5e 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .logo-sub { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    .header-badge {
+      font-size: 11px; color: var(--dim); text-align: right; line-height: 1.6;
+    }
+    .header-badge strong { color: var(--text); font-weight: 600; }
+
+    .demo-btn {
+      padding: 9px 22px; border: none; border-radius: 8px;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: all 0.25s ease;
+      background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+      color: #fff; letter-spacing: 0.3px;
+    }
+    .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,92,246,0.4); }
+    .demo-btn:active { transform: translateY(0); }
+    .demo-btn.stop { background: linear-gradient(135deg, #f43f5e, #f59e0b); }
+
+    /* ── Pipeline ── */
+    .pipeline-wrap {
+      padding: 24px 40px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6,6,15,0.5);
+    }
+    .pipeline-label { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .pipeline-row { display: flex; align-items: center; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+
+    .p-mod {
+      flex-shrink: 0; min-width: 155px; padding: 12px 16px;
+      border-radius: 12px; border: 1px solid var(--border);
+      background: var(--card); cursor: pointer;
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+    }
+    .p-mod::after {
+      content: ''; position: absolute; inset: 0; opacity: 0;
+      transition: opacity 0.3s ease; border-radius: 12px;
+    }
+    .p-mod:hover::after { opacity: 0.6; }
+    .p-mod.active::after { opacity: 1; }
+    .p-mod.m1::after { background: linear-gradient(135deg, rgba(6,182,212,0.12), transparent 70%); }
+    .p-mod.m2::after { background: linear-gradient(135deg, rgba(139,92,246,0.12), transparent 70%); }
+    .p-mod.m3::after { background: linear-gradient(135deg, rgba(245,158,11,0.12), transparent 70%); }
+    .p-mod.m4::after { background: linear-gradient(135deg, rgba(16,185,129,0.12), transparent 70%); }
+    .p-mod.m5::after { background: linear-gradient(135deg, rgba(244,63,94,0.12), transparent 70%); }
+
+    .p-mod.active.m1 { border-color: rgba(6,182,212,0.5); box-shadow: 0 0 20px rgba(6,182,212,0.2); }
+    .p-mod.active.m2 { border-color: rgba(139,92,246,0.5); box-shadow: 0 0 20px rgba(139,92,246,0.2); }
+    .p-mod.active.m3 { border-color: rgba(245,158,11,0.5); box-shadow: 0 0 20px rgba(245,158,11,0.2); }
+    .p-mod.active.m4 { border-color: rgba(16,185,129,0.5); box-shadow: 0 0 20px rgba(16,185,129,0.2); }
+    .p-mod.active.m5 { border-color: rgba(244,63,94,0.5); box-shadow: 0 0 20px rgba(244,63,94,0.2); }
+
+    .p-num { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; position: relative; }
+    .m1 .p-num { color: var(--c1); }
+    .m2 .p-num { color: var(--c2); }
+    .m3 .p-num { color: var(--c3); }
+    .m4 .p-num { color: var(--c4); }
+    .m5 .p-num { color: var(--c5); }
+
+    .p-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; position: relative; }
+    .p-file { font-size: 9px; color: var(--dimmer); margin-top: 3px; font-family: 'JetBrains Mono', monospace; position: relative; }
+
+    .p-arrow { flex-shrink: 0; padding: 0 6px; display: flex; align-items: center; }
+
+    /* ── Main card ── */
+    .main { padding: 28px 40px 48px; }
+
+    .glass {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    /* ── Module header ── */
+    .mod-hdr {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 22px 28px; border-bottom: 1px solid var(--border);
+    }
+    .mod-icon {
+      width: 46px; height: 46px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .m1 .mod-icon { background: var(--c1a); }
+    .m2 .mod-icon { background: var(--c2a); }
+    .m3 .mod-icon { background: var(--c3a); }
+    .m4 .mod-icon { background: var(--c4a); }
+    .m5 .mod-icon { background: var(--c5a); }
+
+    .mod-hdr h2 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+    .mod-hdr p { font-size: 13px; color: var(--dim); line-height: 1.65; max-width: 720px; }
+
+    /* ── Grid layouts ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; background: var(--border); gap: 1px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--border); gap: 1px; }
+    .gcell { background: var(--bg); padding: 22px 26px; }
+    .gcell-full { background: var(--bg); padding: 22px 26px; border-top: 1px solid var(--border); }
+
+    .cell-hd {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--dimmer); margin-bottom: 16px;
+    }
+    .cell-hd-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 11px; }
+    .step { display: flex; gap: 11px; align-items: flex-start; }
+    .step-n {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .step-t { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+    .step-t b { color: var(--text); font-weight: 600; }
+
+    /* ── Params ── */
+    .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; }
+    .param {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 9px; padding: 10px 12px;
+    }
+    .param-k { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--dimmer); margin-bottom: 3px; }
+    .param-v { font-size: 13px; font-weight: 600; }
+
+    /* ── Stats row ── */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+    .stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: 12px; text-align: center; }
+    .stat-v { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stat-l { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Code box ── */
+    .codebox {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 10px 13px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      line-height: 1.7; color: #a5b4fc;
+    }
+
+    /* ── Arch pill row ── */
+    .arch-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .arch-pill {
+      padding: 6px 12px; border-radius: 8px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .arch-pill-title { font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .arch-pill-sub { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #64748b; margin-top: 1px; white-space: nowrap; }
+
+    /* ── Table ── */
+    .ctable { width: 100%; border-collapse: collapse; }
+    .ctable th {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--dimmer); padding: 8px 10px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .ctable td { font-size: 12.5px; padding: 11px 10px; border-bottom: 1px solid var(--border); color: var(--dim); }
+    .ctable tr:last-child td { border-bottom: none; }
+    .ctable tr.best-row td { background: rgba(16,185,129,0.05); color: var(--text); }
+    .ctable td.mn { font-weight: 600; color: var(--text); }
+    .ctable td.bv { color: #10b981; font-weight: 700; }
+    .win-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      background: rgba(16,185,129,0.14); color: #10b981; margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── Fade in ── */
+    .fade { animation: fadeUp 0.35s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .g2, .g3 { grid-template-columns: 1fr; }
+      .header, .pipeline-wrap, .main { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SYNTHETIC DATA — realistic ECG200-like signals
+═══════════════════════════════════════════════════════════════════ */
+
+function seededRNG(seed) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+}
+
+function ecg(len = 96, noise = 0, seed = 42) {
+  const rng = seededRNG(seed);
+  return Array.from({ length: len }, (_, i) => {
+    const t = i / len;
+    let v = 0;
+    v += 0.14 * Math.exp(-0.5 * ((t - 0.14) / 0.044) ** 2);   // P
+    v -= 0.11 * Math.exp(-0.5 * ((t - 0.29) / 0.018) ** 2);   // Q
+    v += 1.28 * Math.exp(-0.5 * ((t - 0.335) / 0.013) ** 2);  // R
+    v -= 0.27 * Math.exp(-0.5 * ((t - 0.38) / 0.021) ** 2);   // S
+    v += 0.31 * Math.exp(-0.5 * ((t - 0.57) / 0.064) ** 2);   // T
+    if (noise > 0) v += noise * (rng() * 2 - 1);
+    return v;
+  });
+}
+
+function ecgAbnormal(len = 96, seed = 99) {
+  const rng = seededRNG(seed);
+  return Array.from({ length: len }, (_, i) => {
+    const t = i / len;
+    let v = 0;
+    v += 0.05 * Math.exp(-0.5 * ((t - 0.14) / 0.05) ** 2);
+    v -= 0.09 * Math.exp(-0.5 * ((t - 0.28) / 0.022) ** 2);
+    v += 0.68 * Math.exp(-0.5 * ((t - 0.33) / 0.017) ** 2);
+    v -= 0.38 * Math.exp(-0.5 * ((t - 0.37) / 0.026) ** 2);
+    v -= 0.19 * Math.exp(-0.5 * ((t - 0.64) / 0.075) ** 2); // inverted T
+    v += 0.025 * (rng() * 2 - 1);
+    return v;
+  });
+}
+
+function rawECG(len = 96, seed = 77) {
+  const base = ecg(len, 0.15, seed);
+  const out = base.map(v => v * 3.8 + 1.4);
+  out[19] = 5.2; out[20] = -0.8; // spike
+  return out;
+}
+
+function addJitter(sig, sigma = 0.09, seed = 1) {
+  const rng = seededRNG(seed);
+  return sig.map(v => v + sigma * (rng() * 2 - 1));
+}
+
+function addMask(sig, ratio = 0.22, seed = 2) {
+  const rng = seededRNG(seed);
+  const start = Math.floor(rng() * (sig.length * (1 - ratio)));
+  const len = Math.floor(sig.length * ratio);
+  return sig.map((v, i) => (i >= start && i < start + len) ? 0 : v);
+}
+
+function smooth(sig, w = 2) {
+  return sig.map((_, i) => {
+    let s = 0, c = 0;
+    for (let j = Math.max(0, i - w); j <= Math.min(sig.length - 1, i + w); j++) { s += sig[j]; c++; }
+    return s / c;
+  });
+}
+
+function curriculum(total = 20, start = 0, end = 0.9, delay = 3, tau = 1.4) {
+  return Array.from({ length: total }, (_, e) => {
+    if (e < delay) return 0;
+    const p = Math.min(1, (e - delay) / Math.max(1, total - delay));
+    return start + (end - start) * Math.pow(p, tau);
+  });
+}
+
+function cluster(cx, cy, spread, n, seed) {
+  const rng = seededRNG(seed);
+  return Array.from({ length: n }, () => ({ x: cx + (rng() * 2 - 1) * spread, y: cy + (rng() * 2 - 1) * spread }));
+}
+
+const TRIAL_DATA = [
+  { id: 0, score: 0.512, ari: 0.38, lr: '1e-3',  student: 'cnn_ae',  embed: 32 },
+  { id: 1, score: 0.581, ari: 0.47, lr: '5e-4',  student: 'lstm_ae', embed: 64 },
+  { id: 2, score: 0.548, ari: 0.42, lr: '1e-3',  student: 'cnn_ae',  embed: 64 },
+  { id: 3, score: 0.635, ari: 0.54, lr: '5e-4',  student: 'cnn_ae',  embed: 64 },
+  { id: 4, score: 0.619, ari: 0.51, lr: '1e-4',  student: 'lstm_ae', embed: 128 },
+  { id: 5, score: 0.714, ari: 0.71, lr: '5e-4',  student: 'cnn_ae',  embed: 64 }, // BEST
+  { id: 6, score: 0.652, ari: 0.56, lr: '1e-3',  student: 'cnn_ae',  embed: 128 },
+  { id: 7, score: 0.678, ari: 0.61, lr: '5e-4',  student: 'lstm_ae', embed: 64 },
+];
+
+const MODULES = [
+  { id: 1, cls: 'm1', color: '#06b6d4', num: 'Module 1', name: 'Data Preprocessing',    file: 'preprocessing.py',        icon: '🧹' },
+  { id: 2, cls: 'm2', color: '#8b5cf6', num: 'Module 2', name: 'Teacher (SimCLR)',       file: 'teacher_contrastive.py',  icon: '🎓' },
+  { id: 3, cls: 'm3', color: '#f59e0b', num: 'Module 3', name: 'Student + Curriculum',  file: 'student_autoencoder.py',  icon: '📚' },
+  { id: 4, cls: 'm4', color: '#10b981', num: 'Module 4', name: 'AutoML (Optuna)',        file: 'automl_search.py',        icon: '⚡' },
+  { id: 5, cls: 'm5', color: '#f43f5e', num: 'Module 5', name: 'Evaluation & XAI',       file: 'evaluation.py',           icon: '📊' },
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   SVG CHART PRIMITIVES
+═══════════════════════════════════════════════════════════════════ */
+
+function normData(data, w, h, px = 12, py = 10) {
+  const min = Math.min(...data), max = Math.max(...data), range = max - min || 1;
+  return data.map((v, i) => ({
+    x: px + (i / (data.length - 1)) * (w - 2 * px),
+    y: py + (1 - (v - min) / range) * (h - 2 * py),
+  }));
+}
+
+function pts2path(pts) {
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+}
+
+function Line({ data, w, h, color, sw = 1.8, px, py, filled = false, opacity = 1 }) {
+  const pts = normData(data, w, h, px, py);
+  const path = pts2path(pts);
+  return (
+    <g opacity={opacity}>
+      {filled && (
+        <path
+          d={`${path} L ${pts[pts.length - 1].x.toFixed(1)},${(h - (py ?? 10)).toFixed(1)} L ${pts[0].x.toFixed(1)},${(h - (py ?? 10)).toFixed(1)} Z`}
+          fill={color} fillOpacity="0.12"
+        />
+      )}
+      <path d={path} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+function Gridlines({ w, h, px = 12, py = 10, rows = 4 }) {
+  return (
+    <g>
+      {Array.from({ length: rows + 1 }, (_, i) => {
+        const y = py + (i / rows) * (h - 2 * py);
+        return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />;
+      })}
+    </g>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 1 — DATA PREPROCESSING
+═══════════════════════════════════════════════════════════════════ */
+
+function Mod1() {
+  const raw   = useMemo(() => rawECG(96, 77), []);
+  const clean = useMemo(() => ecg(96, 0.012, 42), []);
+  const W = 420, H = 140;
+
+  return (
+    <div className="fade m1">
+      <div className="mod-hdr m1">
+        <div className="mod-icon">🧹</div>
+        <div>
+          <h2 style={{ color: '#e2e8f0' }}>Module 1 — Data Ingestion &amp; Preprocessing</h2>
+          <p>Loads raw ECG200 signals from the UCR Archive, fills missing values with linear interpolation,
+          clips extreme outliers to the 1st/99th percentile, and z-score normalises every time-step — all
+          fitted only on training data to prevent leakage into the test set.</p>
+        </div>
+      </div>
+
+      {/* Side-by-side signals */}
+      <div className="g2">
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#ef4444' }} />Raw ECG Signal (before preprocessing)</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+            <Gridlines w={W} h={H} rows={3} />
+            <Line data={raw} w={W} h={H} color="#ef4444" sw={1.5} filled />
+            {/* Spike annotation */}
+            <line x1="83" y1="12" x2="83" y2="52" stroke="#fbbf24" strokeWidth="1" strokeDasharray="3,2" />
+            <circle cx="83" cy="12" r="3" fill="#fbbf24" />
+            <text x="88" y="26" fill="#fbbf24" fontSize="9" fontFamily="Inter">spike</text>
+          </svg>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color: '#64748b', marginTop: 6 }}>
+            range ≈ [−0.3, 5.2] · Gaussian noise · unnormalized
+          </div>
+        </div>
+
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Preprocessed Signal (after Module 1)</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+            <Gridlines w={W} h={H} rows={3} />
+            <Line data={clean} w={W} h={H} color="#06b6d4" sw={2} filled />
+            {/* Zero baseline */}
+            <line x1="12" y1={H/2} x2={W - 12} y2={H/2} stroke="rgba(6,182,212,0.2)" strokeWidth="1" strokeDasharray="4,4" />
+            <text x="14" y={H/2 - 4} fill="rgba(6,182,212,0.5)" fontSize="8" fontFamily="'JetBrains Mono',monospace">μ≈0</text>
+          </svg>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color: '#64748b', marginTop: 6 }}>
+            range ≈ [−1.8, 2.1] · z-score normalized · spike removed
+          </div>
+        </div>
+      </div>
+
+      {/* Steps + Stats */}
+      <div className="g2">
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Step-by-Step Pipeline</div>
+          <div className="steps">
+            {[
+              ['Download Data',       'Fetches ECG200 from the UCR Time-Series Archive as .tsv files into data/ucr/. 97 training + 100 test samples.'],
+              ['Load & Split',        'data_loader.py reads X_train (97×96×1) and X_test (100×96×1). Class labels y_train / y_test kept aside — never used for training.'],
+              ['Fit Statistics',      'Computes per-time-step mean, std, and clip bounds (1st / 99th percentile) on training data only. Test data never influences these statistics.'],
+              ['Fill Missing Values', 'Linear interpolation fills NaN gaps; falls back to forward-fill then global training mean for edge cases.'],
+              ['Clip Outliers',       'Values below 1% or above 99% quantile are clamped. This removes the spike visible in the raw signal above.'],
+              ['Z-score Normalize',   '(value − mean) ÷ std applied per time-step. Result: mean ≈ 0, std ≈ 1. Same stats applied consistently to test set.'],
+            ].map(([t, d], i) => (
+              <div key={i} className="step">
+                <div className="step-n" style={{ background: 'rgba(6,182,212,0.14)', color: '#06b6d4' }}>{i + 1}</div>
+                <div className="step-t"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />ECG200 Dataset</div>
+          <div className="stats" style={{ marginBottom: 20 }}>
+            {[['97','Train Signals'],['100','Test Signals'],['96','Time Steps'],['2','Classes']].map(([v, l]) => (
+              <div key={l} className="stat">
+                <div className="stat-v" style={{ color: '#06b6d4' }}>{v}</div>
+                <div className="stat-l">{l}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="cell-hd" style={{ marginTop: 4 }}><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Key Parameters (AutoML Searches These)</div>
+          <div className="params">
+            {[
+              { k: 'normalization',     v: 'zscore',               c: '#06b6d4' },
+              { k: 'missing_strategy',  v: 'linear_interpolation', c: '#06b6d4' },
+              { k: 'clip_outliers',     v: 'True',                 c: '#06b6d4' },
+              { k: 'clip_quantile',     v: '0.01',                 c: '#94a3b8' },
+            ].map(p => (
+              <div key={p.k} className="param">
+                <div className="param-k">{p.k}</div>
+                <div className="param-v" style={{ color: p.c }}>{p.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 2 — TEACHER CONTRASTIVE
+═══════════════════════════════════════════════════════════════════ */
+
+function Mod2() {
+  const base  = useMemo(() => ecg(96, 0.01, 42), []);
+  const view1 = useMemo(() => addJitter(base, 0.1, 1), [base]);
+  const view2 = useMemo(() => addMask(base, 0.22, 3), [base]);
+  const loss  = useMemo(() => [2.41, 2.18, 1.97, 1.78, 1.60, 1.44, 1.31, 1.21, 1.14, 1.09], []);
+  const W = 420, H = 115, LH = 95;
+
+  const layers = [
+    { l: 'Input (B, 96, 1)',              s: '' },
+    { l: 'Conv1D(1→32, k=3) + BN + ReLU', s: '(B,32,96)' },
+    { l: 'Conv1D(32→64, k=3) + BN + ReLU',s: '(B,64,96)' },
+    { l: 'AdaptiveAvgPool1d(1)',            s: '(B,64)' },
+    { l: 'Linear(64→64) + L2-Normalize',   s: '(B,64) ← z' },
+  ];
+
+  return (
+    <div className="fade m2">
+      <div className="mod-hdr m2">
+        <div className="mod-icon">🎓</div>
+        <div>
+          <h2>Module 2 — Teacher Contrastive CNN (SimCLR / NT-Xent)</h2>
+          <p>A lightweight CNN is trained with no labels using self-supervised contrastive learning. Two randomly
+          distorted "views" of each ECG are generated; the network learns to map the same signal to similar embeddings
+          and different signals to distant embeddings. Based on SimCLR's NT-Xent loss.</p>
+        </div>
+      </div>
+
+      {/* 3 signals */}
+      <div className="g3">
+        {[
+          { title: 'Original Signal',            data: base,  color: '#8b5cf6', desc: 'Clean preprocessed ECG from Module 1' },
+          { title: 'Augmented View 1 — Jitter',  data: view1, color: '#a78bfa', desc: 'Gaussian noise σ=0.1 added per time step' },
+          { title: 'Augmented View 2 — Masking', data: view2, color: '#c4b5fd', desc: '22% of signal randomly set to zero' },
+        ].map(({ title, data, color, desc }) => (
+          <div key={title} className="gcell">
+            <div className="cell-hd"><span className="cell-hd-dot" style={{ background: color }} />{title}</div>
+            <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+              <Gridlines w={W} h={H} rows={3} />
+              <Line data={data} w={W} h={H} color={color} sw={1.6} />
+            </svg>
+            <div style={{ fontSize: '10px', color: '#64748b', marginTop: 6 }}>{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="g2">
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />How NT-Xent Loss Works — Step by Step</div>
+          <div className="steps">
+            {[
+              ['Two Views Per Batch',   'For each batch of B signals, two different random augmentations (jitter + mask) produce View 1 and View 2. Total 2B embeddings.'],
+              ['CNN Encodes Both',      'Both views pass through the same CNN. Each produces a 64-dim embedding, then L2-normalized to sit on a unit sphere.'],
+              ['Similarity Matrix',     'A 2B×2B cosine similarity matrix is built: sim[i,j] = dot(zᵢ, zⱼ) ÷ τ, where τ=0.07 (temperature) sharpens contrasts.'],
+              ['Positive Pairs',        'For signal i, its positive is its other view i+B. The mask removes self-similarities (diagonal = −∞).'],
+              ['Cross-Entropy Loss',    'Loss = mean cross-entropy over the 2B×2B matrix. Pushes positive pairs close; pushes 2B−2 negatives away.'],
+              ['10-Epoch Training',     'NT-Xent loss drops from 2.41 → 1.09 across 10 epochs. Teacher is then frozen and passed to Module 3.'],
+            ].map(([t, d], i) => (
+              <div key={i} className="step">
+                <div className="step-n" style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}>{i + 1}</div>
+                <div className="step-t"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />Contrastive Loss Curve — 10 Epochs</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${LH}`} style={{ marginBottom: 20 }}>
+            <Gridlines w={W} h={LH} rows={3} px={28} py={10} />
+            <Line data={loss} w={W} h={LH} color="#8b5cf6" sw={2.4} filled px={28} py={10} />
+            <text x="30" y="20" fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">2.41</text>
+            <text x={W - 48} y={LH - 8} fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">1.09 ✓</text>
+          </svg>
+
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />CNN Architecture</div>
+          {layers.map(({ l, s }, i) => (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '5px 10px', borderRadius: 6, marginBottom: 4,
+              background: `rgba(139,92,246,${0.08 + i * 0.06})`,
+            }}>
+              <span style={{ fontSize: '11px', fontFamily: "'JetBrains Mono',monospace", color: '#c4b5fd' }}>{l}</span>
+              <span style={{ fontSize: '10px', color: '#64748b', fontFamily: "'JetBrains Mono',monospace" }}>{s}</span>
+            </div>
+          ))}
+
+          <div style={{ marginTop: 14, fontSize: '11px', color: '#94a3b8', lineHeight: '1.6', borderLeft: '2px solid rgba(139,92,246,0.4)', paddingLeft: 10 }}>
+            <b style={{ color: '#a78bfa' }}>Key params searched by AutoML:</b>{' '}
+            aug_strength ∈ &#123;weak, medium, strong&#125;, jitter_sigma, mask_ratio, learning_rate, embedding_dim
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 3 — STUDENT + CURRICULUM
+═══════════════════════════════════════════════════════════════════ */
+
+function Mod3() {
+  const orig   = useMemo(() => ecg(96, 0.01, 42), []);
+  const recon  = useMemo(() => smooth(orig, 2).map((v, i) => v * 0.96 + orig[i] * 0.04), [orig]);
+  const lam    = useMemo(() => curriculum(20, 0, 0.9, 3, 1.4), []);
+  const rLoss  = useMemo(() => Array.from({ length: 20 }, (_, i) => 0.19 * Math.exp(-i * 0.19) + 0.041), []);
+  const dLoss  = useMemo(() => Array.from({ length: 20 }, (_, i) => 0.23 * Math.exp(-i * 0.14) + 0.03), []);
+  const W = 420, H = 130;
+
+  const arch = [
+    { label: 'Input\n(B,96,1)',          hl: false },
+    { label: 'Encoder\nConv1D×2\n+Pool', hl: false },
+    { label: '💎 Bottleneck\nz: (B,64)',  hl: true  },
+    { label: 'Decoder\nUpsample\n+Conv1D×2', hl: false },
+    { label: 'Output\n(B,96,1)',          hl: false },
+  ];
+
+  return (
+    <div className="fade m3">
+      <div className="mod-hdr m3">
+        <div className="mod-icon">📚</div>
+        <div>
+          <h2>Module 3 — Student Autoencoder + Curriculum Learning</h2>
+          <p>A CNN Autoencoder (student) is trained with two losses simultaneously: reconstruct the original ECG signal
+          (autoencoder objective) and match the frozen teacher's embeddings (distillation objective). The Curriculum
+          Scheduler gradually shifts balance from reconstruction → distillation using a parameterised λ ramp.</p>
+        </div>
+      </div>
+
+      <div className="g2">
+        {/* Curriculum chart */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Curriculum Schedule — λ Over 20 Epochs</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ marginBottom: 14 }}>
+            <Gridlines w={W} h={H} rows={4} px={28} py={10} />
+            {/* warm-up zone */}
+            <rect x="28" y="10" width={3 / 20 * (W - 40)} height={H - 20} fill="rgba(100,116,139,0.07)" />
+            <text x="31" y="22" fill="#64748b" fontSize="8" fontFamily="Inter">warm-up (λ=0)</text>
+            <Line data={lam} w={W} h={H} color="#f59e0b" sw={2.5} filled px={28} py={10} />
+            <text x="30" y={H - 8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 0</text>
+            <text x={W - 52} y="20" fill="#f59e0b" fontSize="10" fontFamily="'JetBrains Mono',monospace">λ = 0.9</text>
+            <text x={W - 52} y={H - 8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 20</text>
+          </svg>
+
+          <div className="codebox" style={{ marginBottom: 14 }}>
+            <span style={{ color: '#94a3b8' }}># Total loss per epoch:</span>{'\n'}
+            <span style={{ color: '#f59e0b' }}>L</span> = (1−λ) × MSE(recon, x) + λ × MSE(z_student, z_teacher){'\n'}
+            {'\n'}
+            <span style={{ color: '#94a3b8' }}># λ formula (curriculum.py):</span>{'\n'}
+            <span style={{ color: '#f59e0b' }}>λ</span>(e) = start + (end − start) × progress^tau{'\n'}
+            progress = (e − delay) / (total − delay)
+          </div>
+
+          <div className="params" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+            {[
+              { k: 'start_lambda', v: '0.0',  c: '#f59e0b' },
+              { k: 'end_lambda',   v: '0.9',  c: '#f59e0b' },
+              { k: 'delay_epoch',  v: '3',    c: '#f59e0b' },
+              { k: 'tau',          v: '1.4',  c: '#fbbf24' },
+              { k: 'student_type', v: 'cnn_ae', c: '#94a3b8' },
+              { k: 'embed_dim',    v: '64',   c: '#94a3b8' },
+            ].map(p => (
+              <div key={p.k} className="param">
+                <div className="param-k">{p.k}</div>
+                <div className="param-v" style={{ color: p.c, fontSize: 12 }}>{p.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Reconstruction + training losses */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Reconstruction — Original vs Decoded Signal</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ marginBottom: 8 }}>
+            <Gridlines w={W} h={H} rows={3} />
+            <Line data={orig}  w={W} h={H} color="#94a3b8" sw={1.4} opacity={0.65} />
+            <Line data={recon} w={W} h={H} color="#f59e0b" sw={2.2} opacity={0.9} />
+            <circle cx={W - 100} cy="14" r="4" fill="#94a3b8" opacity="0.65" />
+            <text x={W - 92} y="18" fill="#94a3b8" fontSize="9" fontFamily="Inter">Original</text>
+            <circle cx={W - 100} cy="28" r="4" fill="#f59e0b" />
+            <text x={W - 92} y="32" fill="#f59e0b" fontSize="9" fontFamily="Inter">Reconstructed</text>
+          </svg>
+          <div style={{ fontSize: '10px', color: '#64748b', marginBottom: 18, fontFamily: "'JetBrains Mono',monospace" }}>
+            MSE = 0.041 (best Auto-TSRC) · 64-dim bottleneck
+          </div>
+
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Dual Training Loss Curves</div>
+          <svg width="100%" viewBox={`0 0 ${W} 85`} style={{ marginBottom: 16 }}>
+            <Gridlines w={W} h={85} rows={3} />
+            <Line data={rLoss} w={W} h={85} color="#f59e0b" sw={2}   />
+            <Line data={dLoss} w={W} h={85} color="#8b5cf6" sw={1.6} opacity={0.8} />
+            <text x="14" y="18" fill="#f59e0b" fontSize="9" fontFamily="Inter">Recon loss</text>
+            <text x="14" y="30" fill="#8b5cf6" fontSize="9" fontFamily="Inter">Distil loss</text>
+          </svg>
+
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />CNN Autoencoder Architecture</div>
+          <div className="arch-row">
+            {arch.map((a, i) => (
+              <React.Fragment key={i}>
+                <div className="arch-pill" style={{
+                  background: a.hl ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.03)',
+                  borderColor: a.hl ? '#f59e0b' : 'rgba(255,255,255,0.07)',
+                  boxShadow: a.hl ? '0 0 14px rgba(245,158,11,0.25)' : 'none',
+                }}>
+                  {a.label.split('\n').map((ln, li) => (
+                    <div key={li} className={li === 0 ? 'arch-pill-title' : 'arch-pill-sub'}
+                         style={{ color: a.hl ? '#fbbf24' : li === 0 ? '#e2e8f0' : '#64748b' }}>
+                      {ln}
+                    </div>
+                  ))}
+                </div>
+                {i < arch.length - 1 && <div style={{ color: '#475569', fontSize: 18, flexShrink: 0 }}>→</div>}
+              </React.Fragment>
+            ))}
+            <div style={{ marginLeft: 10, color: '#8b5cf6', fontSize: 11, borderLeft: '2px solid rgba(139,92,246,0.3)', paddingLeft: 10 }}>
+              ↑ Teacher<br />hint z_t
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 4 — AUTOML
+═══════════════════════════════════════════════════════════════════ */
+
+function Mod4() {
+  const [hov, setHov] = useState(null);
+  const maxScore = Math.max(...TRIAL_DATA.map(t => t.score));
+  const W = 480, H = 160;
+  const barW = (W - 36) / TRIAL_DATA.length;
+  const barMaxH = 100;
+  const baseY = H - 22;
+  const minScore = 0.44;
+
+  const hyperparams = [
+    { k: 'normalization',      v: 'zscore' },
+    { k: 'missing_strategy',   v: 'linear_interp' },
+    { k: 'clip_outliers',      v: 'True' },
+    { k: 'aug_strength',       v: 'medium' },
+    { k: 'mask_ratio',         v: '0.1' },
+    { k: 'jitter_sigma',       v: '0.03' },
+    { k: 'student_type',       v: 'cnn_ae' },
+    { k: 'embedding_dim',      v: '64' },
+    { k: 'hidden_dim',         v: '64' },
+    { k: 'learning_rate',      v: '5e-4' },
+    { k: 'batch_size',         v: '32' },
+    { k: 'start_lambda',       v: '0.0' },
+    { k: 'end_lambda',         v: '0.9' },
+    { k: 'delay_epoch',        v: '3' },
+    { k: 'tau',                v: '1.4' },
+  ];
+
+  return (
+    <div className="fade m4">
+      <div className="mod-hdr m4">
+        <div className="mod-icon">⚡</div>
+        <div>
+          <h2>Module 4 — AutoML Optimization (Bayesian Search with Optuna)</h2>
+          <p>Instead of manually picking the 15 hyperparameters, Optuna's TPE (Tree-structured Parzen Estimator)
+          intelligently explores the search space across 8 quick trials. Each trial runs the full pipeline for 5 epochs.
+          The best config is identified then retrained for 20 full epochs.</p>
+        </div>
+      </div>
+
+      <div className="g2">
+        {/* Bar chart */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#10b981' }} />8 AutoML Trial Scores — Hover to Inspect</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ cursor: 'pointer', marginBottom: 8 }}>
+            {/* Y gridlines */}
+            {[0.5, 0.6, 0.7].map(v => {
+              const y = baseY - ((v - minScore) / (maxScore - minScore + 0.02)) * barMaxH;
+              return (
+                <g key={v}>
+                  <line x1="28" y1={y} x2={W - 8} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                  <text x="24" y={y + 3} fill="#475569" fontSize="8" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{v}</text>
+                </g>
+              );
+            })}
+
+            {TRIAL_DATA.map((t, i) => {
+              const bH = ((t.score - minScore) / (maxScore - minScore + 0.02)) * barMaxH;
+              const bx = 30 + i * barW + barW * 0.12;
+              const bw = barW * 0.76;
+              const by = baseY - bH;
+              const best = t.score === maxScore;
+              const hovd = hov === i;
+
+              return (
+                <g key={i}
+                   onMouseEnter={() => setHov(i)}
+                   onMouseLeave={() => setHov(null)}>
+                  <rect x={bx} y={by} width={bw} height={bH} rx="3"
+                    fill={best ? '#10b981' : hovd ? 'rgba(16,185,129,0.55)' : 'rgba(16,185,129,0.22)'}
+                    style={{ transition: 'fill 0.15s' }}
+                  />
+                  {best && <rect x={bx - 1} y={by - 1} width={bw + 2} height={bH + 1} rx="4" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.5" />}
+                  {best && <text x={bx + bw / 2} y={by - 12} fill="#10b981" fontSize="11" textAnchor="middle">★</text>}
+                  {(best || hovd) && <text x={bx + bw / 2} y={by - 3} fill={best ? '#10b981' : '#94a3b8'} fontSize="8" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{t.score.toFixed(3)}</text>}
+                  <text x={bx + bw / 2} y={baseY + 12} fill={best ? '#10b981' : '#64748b'} fontSize="9" textAnchor="middle" fontWeight={best ? '700' : '400'} fontFamily="Inter">T{t.id}</text>
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Tooltip area */}
+          <div style={{ height: 50, padding: '0 4px' }}>
+            {hov !== null && (
+              <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#94a3b8' }}>
+                <b style={{ color: '#10b981' }}>Trial {TRIAL_DATA[hov].id}</b>
+                {' · '}score={TRIAL_DATA[hov].score.toFixed(3)}
+                {' · '}ARI={TRIAL_DATA[hov].ari.toFixed(2)}
+                {' · '}student={TRIAL_DATA[hov].student}
+                {' · '}embed={TRIAL_DATA[hov].embed}
+                {' · '}lr={TRIAL_DATA[hov].lr}
+                {TRIAL_DATA[hov].score === maxScore && <b style={{ color: '#10b981', marginLeft: 8 }}>← WINNER</b>}
+              </div>
+            )}
+          </div>
+
+          <div className="codebox">
+            <span style={{ color: '#64748b' }}># Multi-objective score formula:</span>{'\n'}
+            Score = <span style={{ color: '#6ee7b7' }}>0.35</span>×ARI + <span style={{ color: '#6ee7b7' }}>0.20</span>×NMI + <span style={{ color: '#6ee7b7' }}>0.15</span>×CHI{'\n'}
+{'       '}+ <span style={{ color: '#6ee7b7' }}>0.15</span>×ReconQuality + <span style={{ color: '#6ee7b7' }}>0.10</span>×Robust{'\n'}
+{'       '}− <span style={{ color: '#f87171' }}>0.05</span>×TrainingTime
+          </div>
+        </div>
+
+        {/* 3-stage + best config */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#10b981' }} />3-Stage AutoML Process</div>
+          <div className="steps" style={{ marginBottom: 20 }}>
+            {[
+              ['Stage 1 — Quick Trials',    '8 trials × 5 epochs. Optuna\'s TPE proposes configs intelligently based on prior results. Each trial runs the full train+eval pipeline.'],
+              ['Stage 2 — Re-Scoring',      'All 8 trials re-scored using the full multi-objective formula (ARI, NMI, CHI, reconstruction quality, time penalty). Winner selected.'],
+              ['Stage 3 — Final Retrain',   'Best config (Trial 5) retrained from scratch for 20 full epochs. Saved as .pt checkpoint. Best params exported to JSON for the dashboard.'],
+            ].map(([t, d], i) => (
+              <div key={i} className="step">
+                <div className="step-n" style={{ background: 'rgba(16,185,129,0.14)', color: '#10b981' }}>{i + 1}</div>
+                <div className="step-t"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#10b981' }} />All 15 Hyperparameters — Best Values (Trial 5)</div>
+          <div className="params" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+            {hyperparams.map(p => (
+              <div key={p.k} className="param" style={{ borderColor: 'rgba(16,185,129,0.18)', padding: '8px 10px' }}>
+                <div className="param-k">{p.k}</div>
+                <div className="param-v" style={{ color: '#10b981', fontSize: 12 }}>{p.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE 5 — EVALUATION & XAI
+═══════════════════════════════════════════════════════════════════ */
+
+function Mod5() {
+  const normPts = useMemo(() => cluster(-1.9, 1.3, 0.85, 48, 11), []);
+  const abnoPts = useMemo(() => cluster(2.1, -1.0, 0.95, 52, 22), []);
+
+  const W = 300, H = 200, px = 18, py = 14;
+  const allPts = [...normPts, ...abnoPts];
+  const mnX = Math.min(...allPts.map(p => p.x)), mxX = Math.max(...allPts.map(p => p.x));
+  const mnY = Math.min(...allPts.map(p => p.y)), mxY = Math.max(...allPts.map(p => p.y));
+  const toSVG = (x, y) => ({
+    x: px + (x - mnX) / (mxX - mnX) * (W - 2 * px),
+    y: py + (1 - (y - mnY) / (mxY - mnY)) * (H - 2 * py),
+  });
+
+  const robRows = [
+    { name: 'Missing Values', atsr: 0.04, man: 0.12 },
+    { name: 'Gaussian Noise', atsr: 0.06, man: 0.15 },
+    { name: 'Spike Noise',    atsr: 0.08, man: 0.18 },
+    { name: 'Time Warp',      atsr: 0.05, man: 0.13 },
+  ];
+
+  const RW = 440, RH = 110;
+  const gw = (RW - 32) / robRows.length;
+  const bmaxH = 75;
+  const baseRY = RH - 18;
+
+  return (
+    <div className="fade m5">
+      <div className="mod-hdr m5">
+        <div className="mod-icon">📊</div>
+        <div>
+          <h2>Module 5 — Evaluation, Robustness &amp; Explainability</h2>
+          <p>The final Auto-TSRC model is rigorously evaluated: 4 clustering metrics on clean test data, an SVM probe accuracy,
+          stress-testing under 4 corruption types (missing values, noise, spikes, time warp), and visual explainability plots
+          (PCA scatter, reconstruction overlays, saliency maps). All 4 models are compared side-by-side.</p>
+        </div>
+      </div>
+
+      <div className="g2">
+        {/* PCA scatter */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />PCA Scatter — 64-D Embeddings Projected to 2D</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <svg width={W} height={H}>
+              {/* Axes */}
+              <line x1={px} y1={H - py} x2={W - px} y2={H - py} stroke="rgba(255,255,255,0.08)" />
+              <line x1={px} y1={py}     x2={px}     y2={H - py} stroke="rgba(255,255,255,0.08)" />
+              <text x={W / 2} y={H - 2} fill="#475569" fontSize="9" fontFamily="Inter" textAnchor="middle">PC1 (38.4% variance)</text>
+              <text x="8" y={H / 2} fill="#475569" fontSize="9" fontFamily="Inter" textAnchor="middle" transform={`rotate(-90,8,${H/2})`}>PC2 (21.7%)</text>
+              {/* Normal cluster */}
+              {normPts.map((p, i) => { const s = toSVG(p.x, p.y); return <circle key={i} cx={s.x} cy={s.y} r="3.5" fill="#06b6d4" opacity="0.75" />; })}
+              {/* Abnormal cluster */}
+              {abnoPts.map((p, i) => { const s = toSVG(p.x, p.y); return <circle key={i} cx={s.x} cy={s.y} r="3.5" fill="#f43f5e" opacity="0.75" />; })}
+              {/* Legend */}
+              <circle cx="32" cy="20" r="5" fill="#06b6d4" />
+              <text x="42" y="24" fill="#94a3b8" fontSize="10" fontFamily="Inter">Normal ECG (class 0)</text>
+              <circle cx="32" cy="36" r="5" fill="#f43f5e" />
+              <text x="42" y="40" fill="#94a3b8" fontSize="10" fontFamily="Inter">Abnormal ECG (class 1)</text>
+            </svg>
+          </div>
+          <div style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', fontFamily: "'JetBrains Mono',monospace" }}>
+            ARI=0.71 · NMI=0.63 · Silhouette=0.58 · CHI=124.3
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />What Each Metric Measures</div>
+            {[
+              { n: 'ARI', d: 'Adjusted Rand Index — cluster vs true label agreement. Range −1→1. Higher = better.' },
+              { n: 'NMI', d: 'Normalized Mutual Info — shared information. Range 0→1. Higher = better.' },
+              { n: 'SVM', d: 'SVM Probe Accuracy — if embeddings are meaningful, SVM classifies them well.' },
+              { n: 'MSE', d: 'Reconstruction Error — how accurately the student rebuilds the raw signal.' },
+            ].map(({ n, d }) => (
+              <div key={n} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: '#f43f5e', minWidth: 36 }}>{n}</span>
+                <span style={{ fontSize: 11, color: '#94a3b8', lineHeight: '1.55' }}>{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Comparison table */}
+        <div className="gcell">
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />Model Comparison Table — ECG200 Dataset</div>
+          <table className="ctable" style={{ marginBottom: 20 }}>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>ARI ↑</th>
+                <th>NMI ↑</th>
+                <th>SVM ↑</th>
+                <th>MSE ↓</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="mn">Student Only</td>
+                <td>0.21</td><td>0.18</td><td>72%</td><td>0.089</td>
+              </tr>
+              <tr>
+                <td className="mn">Teacher Only</td>
+                <td>0.34</td><td>0.29</td><td>79%</td><td>—</td>
+              </tr>
+              <tr>
+                <td className="mn">Manual TSRC</td>
+                <td>0.51</td><td>0.44</td><td>85%</td><td>0.062</td>
+              </tr>
+              <tr className="best-row">
+                <td className="mn">Auto-TSRC <span className="win-badge">★ BEST</span></td>
+                <td className="bv">0.71</td>
+                <td className="bv">0.63</td>
+                <td className="bv">91%</td>
+                <td className="bv">0.041</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />Robustness — ARI Drop Under Data Corruption</div>
+          <svg width="100%" viewBox={`0 0 ${RW} ${RH}`} style={{ marginBottom: 10 }}>
+            {[0.05, 0.10, 0.15].map(v => {
+              const y = baseRY - (v / 0.21) * bmaxH;
+              return (
+                <g key={v}>
+                  <line x1="28" y1={y} x2={RW - 8} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                  <text x="24" y={y + 3} fill="#475569" fontSize="8" textAnchor="end" fontFamily="'JetBrains Mono',monospace">{v.toFixed(2)}</text>
+                </g>
+              );
+            })}
+            {robRows.map((d, gi) => {
+              const gx = 30 + gi * gw;
+              const aH = (d.atsr / 0.21) * bmaxH;
+              const mH = (d.man  / 0.21) * bmaxH;
+              const bw = gw * 0.28;
+
+              return (
+                <g key={gi}>
+                  <rect x={gx + 2} y={baseRY - aH} width={bw} height={aH} fill="rgba(16,185,129,0.7)" rx="2" />
+                  <text x={gx + 2 + bw / 2} y={baseRY - aH - 3} fill="#6ee7b7" fontSize="8" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{d.atsr.toFixed(2)}</text>
+                  <rect x={gx + bw + 5} y={baseRY - mH} width={bw} height={mH} fill="rgba(244,63,94,0.55)" rx="2" />
+                  <text x={gx + bw + 5 + bw / 2} y={baseRY - mH - 3} fill="#fda4af" fontSize="8" textAnchor="middle" fontFamily="'JetBrains Mono',monospace">{d.man.toFixed(2)}</text>
+                  <text x={gx + gw / 2 - 6} y={RH - 4} fill="#64748b" fontSize="8" textAnchor="middle" fontFamily="Inter">{d.name}</text>
+                </g>
+              );
+            })}
+          </svg>
+
+          <div style={{ display: 'flex', gap: 16, marginBottom: 14, fontSize: 11 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 14, height: 8, background: 'rgba(16,185,129,0.7)', borderRadius: 2 }} />
+              <span style={{ color: '#10b981', fontWeight: 600 }}>Auto-TSRC</span>
+              <span style={{ color: '#64748b' }}>(smaller drop = more robust)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 14, height: 8, background: 'rgba(244,63,94,0.55)', borderRadius: 2 }} />
+              <span style={{ color: '#f43f5e', fontWeight: 600 }}>Manual TSRC</span>
+            </div>
+          </div>
+
+          <div className="codebox">
+            Auto-TSRC drops only <span style={{ color: '#6ee7b7' }}>0.04–0.08 ARI</span> under corruption{'\n'}
+            Manual TSRC drops <span style={{ color: '#f87171' }}>0.12–0.18 ARI</span> under same corruption{'\n'}
+            → AutoML-found preprocessing + augmentations = 2–3× more robust
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIPELINE ARROW
+═══════════════════════════════════════════════════════════════════ */
+
+function Arrow({ color }) {
+  return (
+    <div className="p-arrow">
+      <svg width="30" height="20" viewBox="0 0 30 20">
+        <line x1="2" y1="10" x2="22" y2="10" stroke={color || '#334155'} strokeWidth="1.5" />
+        <polygon points="18,5 28,10 18,15" fill={color || '#334155'} />
+      </svg>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════════════════════════ */
+
+const VIEWS = { 1: Mod1, 2: Mod2, 3: Mod3, 4: Mod4, 5: Mod5 };
+
+function App() {
+  const [active, setActive] = useState(1);
+  const [running, setRunning] = useState(false);
+  const timer = useRef(null);
+
+  const runDemo = () => {
+    if (running) {
+      clearInterval(timer.current);
+      setRunning(false);
+      return;
+    }
+    setRunning(true);
+    setActive(1);
+    let cur = 1;
+    timer.current = setInterval(() => {
+      cur = cur >= 5 ? 1 : cur + 1;
+      setActive(cur);
+      if (cur === 5) { clearInterval(timer.current); setRunning(false); }
+    }, 3000);
+  };
+
+  useEffect(() => () => clearInterval(timer.current), []);
+
+  const ActiveView = VIEWS[active];
+  const mod = MODULES.find(m => m.id === active);
+
+  return (
+    <>
+      {/* ── Header ── */}
+      <header className="header">
+        <div>
+          <div className="logo-title">Auto-TSRC Dashboard</div>
+          <div className="logo-sub">AutoML · Contrastive Learning · Curriculum Distillation · Time-Series</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="header-badge">
+            Dataset: <strong>ECG200</strong><br />
+            97 train · 100 test · 96 time steps · 2 classes
+          </div>
+          <button className={`demo-btn ${running ? 'stop' : ''}`} onClick={runDemo}>
+            <span>{running ? '⏹' : '▶'}</span>
+            {running ? 'Stop Demo' : 'Run Full Demo'}
+          </button>
+        </div>
+      </header>
+
+      {/* ── Pipeline flow ── */}
+      <div className="pipeline-wrap">
+        <div className="pipeline-label">▸ Click any module to explore · Press "Run Full Demo" to auto-advance through all 5 modules</div>
+        <div className="pipeline-row">
+          {MODULES.map((m, i) => (
+            <React.Fragment key={m.id}>
+              <div
+                className={`p-mod ${m.cls} ${active === m.id ? 'active' : ''}`}
+                onClick={() => { clearInterval(timer.current); setRunning(false); setActive(m.id); }}
+              >
+                <div className="p-num">{m.num}</div>
+                <div className="p-name">{m.icon} {m.name}</div>
+                <div className="p-file">{m.file}</div>
+              </div>
+              {i < MODULES.length - 1 && (
+                <Arrow color={active === m.id ? m.color : active === MODULES[i + 1].id ? MODULES[i + 1].color : undefined} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Module detail ── */}
+      <div className="main">
+        <div className="glass" style={{ borderColor: mod.color + '33' }}>
+          <ActiveView key={active} />
+        </div>
+      </div>
+
+      {/* ── Footer ── */}
+      <footer style={{ padding: '16px 40px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: '#334155' }}>Auto-TSRC · EDI Semester 2 · ECG200 Example</span>
+        <span style={{ fontSize: 11, color: '#334155' }}>All data simulated for demonstration · Metrics match real pipeline output</span>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
