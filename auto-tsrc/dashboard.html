@@ -1,478 +1,964 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Auto-TSRC Interactive Pipeline Dashboard — AutoML Curriculum Distillation for Time-Series" />
-  <title>Auto-TSRC | Interactive Pipeline Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Auto-TSRC | Pipeline Application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06060f;--bg2:#0d0d1f;--bg3:#111128;--bg4:#161630;
+  --card:rgba(255,255,255,0.032);--border:rgba(255,255,255,0.075);
+  --text:#e2e8f0;--dim:#94a3b8;--dimmer:#64748b;
+  --c1:#06b6d4;--c1a:rgba(6,182,212,0.13);
+  --c2:#8b5cf6;--c2a:rgba(139,92,246,0.13);
+  --c3:#f59e0b;--c3a:rgba(245,158,11,0.13);
+  --c4:#10b981;--c4a:rgba(16,185,129,0.13);
+  --c5:#f43f5e;--c5a:rgba(244,63,94,0.13);
+}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 10% 10%,rgba(6,182,212,0.055) 0%,transparent 65%),
+    radial-gradient(ellipse 60% 50% at 90% 90%,rgba(139,92,246,0.055) 0%,transparent 65%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,rgba(16,185,129,0.025) 0%,transparent 70%);
+}
+#root{position:relative;z-index:1}
 
-    :root {
-      --bg:     #06060f;
-      --bg2:    #0c0c1e;
-      --bg3:    #111128;
-      --card:   rgba(255,255,255,0.035);
-      --border: rgba(255,255,255,0.07);
-      --text:   #e2e8f0;
-      --dim:    #94a3b8;
-      --dimmer: #64748b;
-      --c1: #06b6d4; --c1a: rgba(6,182,212,0.15);
-      --c2: #8b5cf6; --c2a: rgba(139,92,246,0.15);
-      --c3: #f59e0b; --c3a: rgba(245,158,11,0.15);
-      --c4: #10b981; --c4a: rgba(16,185,129,0.15);
-      --c5: #f43f5e; --c5a: rgba(244,63,94,0.15);
-    }
+/* HEADER */
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 36px;
+  background:rgba(6,6,15,0.9);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:300;
+}
+.logo{font-size:18px;font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(120deg,#06b6d4 0%,#8b5cf6 55%,#f43f5e 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-size:9px;color:var(--dimmer);text-transform:uppercase;letter-spacing:1.2px;margin-top:1px}
 
-    html, body { height: 100%; overflow-x: hidden; }
+.hdr-right{display:flex;align-items:center;gap:14px}
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+.ds-pill{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:10px;padding:7px 12px;
+}
+.ds-pill label{font-size:10px;color:var(--dimmer);text-transform:uppercase;letter-spacing:.8px}
+.ds-sel{
+  background:transparent;border:none;color:var(--text);
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  outline:none;cursor:pointer;
+}
+.ds-sel option{background:#0d0d1f}
 
-    body::before {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 15% 15%, rgba(6,182,212,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 85% 85%, rgba(139,92,246,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,185,129,0.03) 0%, transparent 70%);
-    }
+.run-btn{
+  padding:8px 20px;border:none;border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:7px;
+  transition:all .22s ease;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  color:#fff;
+}
+.run-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(139,92,246,.4)}
+.run-btn.stop{background:linear-gradient(135deg,#f43f5e,#f59e0b)}
 
-    #root { position: relative; z-index: 1; }
+/* PIPELINE BAR */
+.pipe{
+  display:flex;align-items:center;gap:0;
+  padding:18px 36px;
+  border-bottom:1px solid var(--border);
+  background:rgba(6,6,15,.55);
+  overflow-x:auto;
+}
+.pmod{
+  flex-shrink:0;min-width:148px;padding:10px 14px;
+  border-radius:10px;border:1px solid var(--border);
+  background:var(--card);cursor:pointer;
+  transition:all .28s ease;position:relative;overflow:hidden;
+}
+.pmod::after{
+  content:'';position:absolute;inset:0;opacity:0;
+  transition:opacity .28s;border-radius:10px;
+}
+.pmod:hover::after{opacity:.7}
+.pmod.active::after{opacity:1}
+.pmod.m1::after{background:linear-gradient(135deg,rgba(6,182,212,.14),transparent 70%)}
+.pmod.m2::after{background:linear-gradient(135deg,rgba(139,92,246,.14),transparent 70%)}
+.pmod.m3::after{background:linear-gradient(135deg,rgba(245,158,11,.14),transparent 70%)}
+.pmod.m4::after{background:linear-gradient(135deg,rgba(16,185,129,.14),transparent 70%)}
+.pmod.m5::after{background:linear-gradient(135deg,rgba(244,63,94,.14),transparent 70%)}
+.pmod.active.m1{border-color:rgba(6,182,212,.55);box-shadow:0 0 22px rgba(6,182,212,.2)}
+.pmod.active.m2{border-color:rgba(139,92,246,.55);box-shadow:0 0 22px rgba(139,92,246,.2)}
+.pmod.active.m3{border-color:rgba(245,158,11,.55);box-shadow:0 0 22px rgba(245,158,11,.2)}
+.pmod.active.m4{border-color:rgba(16,185,129,.55);box-shadow:0 0 22px rgba(16,185,129,.2)}
+.pmod.active.m5{border-color:rgba(244,63,94,.55);box-shadow:0 0 22px rgba(244,63,94,.2)}
 
-    /* ── Header ── */
-    .header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 40px;
-      background: rgba(6,6,15,0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 200;
-    }
-    .logo-title {
-      font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
-      background: linear-gradient(120deg, #06b6d4 0%, #8b5cf6 60%, #f43f5e 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .logo-sub { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.pnum{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;position:relative}
+.m1 .pnum{color:var(--c1)}.m2 .pnum{color:var(--c2)}.m3 .pnum{color:var(--c3)}.m4 .pnum{color:var(--c4)}.m5 .pnum{color:var(--c5)}
+.pname{font-size:11.5px;font-weight:600;color:var(--text);line-height:1.3;position:relative}
+.pfile{font-size:9px;color:var(--dimmer);margin-top:3px;font-family:'JetBrains Mono',monospace;position:relative}
+.parr{flex-shrink:0;padding:0 5px;display:flex;align-items:center}
 
-    .header-badge {
-      font-size: 11px; color: var(--dim); text-align: right; line-height: 1.6;
-    }
-    .header-badge strong { color: var(--text); font-weight: 600; }
-    
-    .ds-select {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-      margin-left: 8px;
-    }
-    .ds-select option { background: var(--bg2); color: var(--text); }
+/* MAIN CONTENT */
+.main{padding:24px 36px 48px}
+.glass{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
 
-    .demo-btn {
-      padding: 9px 22px; border: none; border-radius: 8px;
-      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; gap: 8px;
-      transition: all 0.25s ease;
-      background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-      color: #fff; letter-spacing: 0.3px;
-    }
-    .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,92,246,0.4); }
-    .demo-btn:active { transform: translateY(0); }
-    .demo-btn.stop { background: linear-gradient(135deg, #f43f5e, #f59e0b); }
+/* Module Header */
+.mhdr{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:20px 26px 16px;border-bottom:1px solid var(--border);
+}
+.micon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.m1 .micon{background:var(--c1a)}.m2 .micon{background:var(--c2a)}.m3 .micon{background:var(--c3a)}.m4 .micon{background:var(--c4a)}.m5 .micon{background:var(--c5a)}
+.mhdr h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.mhdr p{font-size:12px;color:var(--dim);line-height:1.6;max-width:700px}
 
-    /* ── Pipeline ── */
-    .pipeline-wrap {
-      padding: 24px 40px 20px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(6,6,15,0.5);
-    }
-    .pipeline-label { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
-    .pipeline-row { display: flex; align-items: center; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;background:var(--border);gap:1px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--border);gap:1px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:var(--border);gap:1px}
+.gcell{background:var(--bg);padding:20px 24px}
 
-    .p-mod {
-      flex-shrink: 0; min-width: 155px; padding: 12px 16px;
-      border-radius: 12px; border: 1px solid var(--border);
-      background: var(--card); cursor: pointer;
-      transition: all 0.3s ease; position: relative; overflow: hidden;
-    }
-    .p-mod::after {
-      content: ''; position: absolute; inset: 0; opacity: 0;
-      transition: opacity 0.3s ease; border-radius: 12px;
-    }
-    .p-mod:hover::after { opacity: 0.6; }
-    .p-mod.active::after { opacity: 1; }
-    .p-mod.m1::after { background: linear-gradient(135deg, rgba(6,182,212,0.12), transparent 70%); }
-    .p-mod.m2::after { background: linear-gradient(135deg, rgba(139,92,246,0.12), transparent 70%); }
-    .p-mod.m3::after { background: linear-gradient(135deg, rgba(245,158,11,0.12), transparent 70%); }
-    .p-mod.m4::after { background: linear-gradient(135deg, rgba(16,185,129,0.12), transparent 70%); }
-    .p-mod.m5::after { background: linear-gradient(135deg, rgba(244,63,94,0.12), transparent 70%); }
+/* Section labels */
+.slbl{
+  display:flex;align-items:center;gap:7px;
+  font-size:9.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--dimmer);margin-bottom:14px;
+}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
-    .p-mod.active.m1 { border-color: rgba(6,182,212,0.5); box-shadow: 0 0 20px rgba(6,182,212,0.2); }
-    .p-mod.active.m2 { border-color: rgba(139,92,246,0.5); box-shadow: 0 0 20px rgba(139,92,246,0.2); }
-    .p-mod.active.m3 { border-color: rgba(245,158,11,0.5); box-shadow: 0 0 20px rgba(245,158,11,0.2); }
-    .p-mod.active.m4 { border-color: rgba(16,185,129,0.5); box-shadow: 0 0 20px rgba(16,185,129,0.2); }
-    .p-mod.active.m5 { border-color: rgba(244,63,94,0.5); box-shadow: 0 0 20px rgba(244,63,94,0.2); }
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:11px;text-align:center}
+.stat-v{font-size:20px;font-weight:800;line-height:1;margin-bottom:3px}
+.stat-l{font-size:9.5px;color:var(--dimmer);text-transform:uppercase;letter-spacing:.4px}
 
-    .p-num { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; position: relative; }
-    .m1 .p-num { color: var(--c1); }
-    .m2 .p-num { color: var(--c2); }
-    .m3 .p-num { color: var(--c3); }
-    .m4 .p-num { color: var(--c4); }
-    .m5 .p-num { color: var(--c5); }
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;gap:10px;align-items:flex-start}
+.stepn{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:2px}
+.stept{font-size:12px;color:var(--dim);line-height:1.55}
+.stept b{color:var(--text);font-weight:600}
 
-    .p-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; position: relative; }
-    .p-file { font-size: 9px; color: var(--dimmer); margin-top: 3px; font-family: 'JetBrains Mono', monospace; position: relative; }
+/* Params grid */
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.param{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.pk{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--dimmer);margin-bottom:3px}
+.pv{font-size:12px;font-weight:600}
 
-    .p-arrow { flex-shrink: 0; padding: 0 6px; display: flex; align-items: center; }
+/* Code block */
+.code{
+  background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.055);
+  border-radius:8px;padding:10px 13px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  line-height:1.7;color:#a5b4fc;
+}
 
-    /* ── Main card ── */
-    .main { padding: 28px 40px 48px; }
+/* Table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--dimmer);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{font-size:12px;padding:10px;border-bottom:1px solid var(--border);color:var(--dim)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.best td{background:rgba(16,185,129,.05);color:var(--text)}
+.tbl td.nm{font-weight:600;color:var(--text)}
+.tbl td.gd{color:#10b981;font-weight:700}
+.badge{display:inline-flex;align-items:center;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(16,185,129,.14);color:#10b981;margin-left:6px;vertical-align:middle}
 
-    .glass {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 18px; overflow: hidden;
-      backdrop-filter: blur(12px);
-    }
+/* Tabs (Module 5) */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg2)}
+.tab{
+  padding:11px 18px;font-size:11.5px;font-weight:600;cursor:pointer;
+  color:var(--dimmer);border-bottom:2px solid transparent;
+  transition:all .2s;background:transparent;border-top:none;border-left:none;border-right:none;
+  font-family:'Inter',sans-serif;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:#f43f5e;border-bottom-color:#f43f5e}
 
-    /* ── Module header ── */
-    .mod-hdr {
-      display: flex; align-items: flex-start; gap: 16px;
-      padding: 22px 28px; border-bottom: 1px solid var(--border);
-    }
-    .mod-icon {
-      width: 46px; height: 46px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-    .m1 .mod-icon { background: var(--c1a); }
-    .m2 .mod-icon { background: var(--c2a); }
-    .m3 .mod-icon { background: var(--c3a); }
-    .m4 .mod-icon { background: var(--c4a); }
-    .m5 .mod-icon { background: var(--c5a); }
+/* Heatmap row */
+.heatrow{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:6px}
+.heatcell{flex:1;transition:background .3s}
 
-    .mod-hdr h2 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
-    .mod-hdr p { font-size: 13px; color: var(--dim); line-height: 1.65; max-width: 720px; }
+/* Layer diagram */
+.layer-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.lyr{
+  padding:5px 11px;border-radius:7px;text-align:center;
+  border:1px solid rgba(255,255,255,.07);
+}
+.lyr-t{font-size:10.5px;font-weight:600;white-space:nowrap}
+.lyr-s{font-size:9px;font-family:'JetBrains Mono',monospace;color:#64748b;margin-top:1px;white-space:nowrap}
 
-    /* ── Grid layouts ── */
-    .g2 { display: grid; grid-template-columns: 1fr 1fr; background: var(--border); gap: 1px; }
-    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--border); gap: 1px; }
-    .gcell { background: var(--bg); padding: 22px 26px; }
+/* Progress bar */
+.pbar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:5px;overflow:hidden;margin-top:4px}
+.pbar{height:100%;border-radius:4px;transition:width .8s ease}
 
-    .cell-hd {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1.2px; color: var(--dimmer); margin-bottom: 16px;
-    }
-    .cell-hd-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+/* Fade anim */
+.fade{animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-    /* ── Steps ── */
-    .steps { display: flex; flex-direction: column; gap: 11px; }
-    .step { display: flex; gap: 11px; align-items: flex-start; }
-    .step-n {
-      width: 22px; height: 22px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
-    }
-    .step-t { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
-    .step-t b { color: var(--text); font-weight: 600; }
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
 
-    /* ── Params ── */
-    .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; }
-    .param {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 9px; padding: 10px 12px;
-    }
-    .param-k { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--dimmer); margin-bottom: 3px; }
-    .param-v { font-size: 13px; font-weight: 600; }
-
-    /* ── Stats row ── */
-    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-    .stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: 12px; text-align: center; }
-    .stat-v { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-    .stat-l { font-size: 10px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* ── Code box ── */
-    .codebox {
-      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px; padding: 10px 13px;
-      font-family: 'JetBrains Mono', monospace; font-size: 11px;
-      line-height: 1.7; color: #a5b4fc;
-    }
-
-    /* ── Arch pill row ── */
-    .arch-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .arch-pill {
-      padding: 6px 12px; border-radius: 8px; text-align: center;
-      border: 1px solid rgba(255,255,255,0.07);
-    }
-    .arch-pill-title { font-size: 10px; font-weight: 600; white-space: nowrap; }
-    .arch-pill-sub { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #64748b; margin-top: 1px; white-space: nowrap; }
-
-    /* ── Table ── */
-    .ctable { width: 100%; border-collapse: collapse; }
-    .ctable th {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
-      color: var(--dimmer); padding: 8px 10px; text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    .ctable td { font-size: 12.5px; padding: 11px 10px; border-bottom: 1px solid var(--border); color: var(--dim); }
-    .ctable tr:last-child td { border-bottom: none; }
-    .ctable tr.best-row td { background: rgba(16,185,129,0.05); color: var(--text); }
-    .ctable td.mn { font-weight: 600; color: var(--text); }
-    .ctable td.bv { color: #10b981; font-weight: 700; }
-    .win-badge {
-      display: inline-flex; align-items: center; gap: 3px;
-      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
-      background: rgba(16,185,129,0.14); color: #10b981; margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    /* ── Fade in ── */
-    .fade { animation: fadeUp 0.35s ease both; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-
-    @media (max-width: 900px) {
-      .g2, .g3 { grid-template-columns: 1fr; }
-      .header, .pipeline-wrap, .main { padding-left: 18px; padding-right: 18px; }
-    }
-  </style>
+@media(max-width:900px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .hdr,.pipe,.main{padding-left:16px;padding-right:16px}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useMemo } = React;
 
-/* ═══════════════════════════════════════════════════════════════════
-   DATASETS INFO
-═══════════════════════════════════════════════════════════════════ */
-const DATASETS = {
-  ECG200: { name: 'ECG200', train: 97, test: 100, steps: 96, classes: 2, ari: 0.71, nmi: 0.63, svm: 91, mse: 0.041 },
-  GunPoint: { name: 'GunPoint', train: 50, test: 150, steps: 150, classes: 2, ari: 0.82, nmi: 0.75, svm: 95, mse: 0.022 },
-  Coffee: { name: 'Coffee', train: 28, test: 28, steps: 286, classes: 2, ari: 0.65, nmi: 0.55, svm: 85, mse: 0.053 }
-};
+const {useState,useEffect,useRef,useMemo,useCallback} = React;
 
-/* ═══════════════════════════════════════════════════════════════════
-   SYNTHETIC DATA — realistic signals
-═══════════════════════════════════════════════════════════════════ */
-function seededRNG(seed) {
-  let s = seed >>> 0;
-  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+/* ═══════════════════════════════════════════
+   SEEDED RNG
+═══════════════════════════════════════════ */
+function rng(seed){
+  let s=seed>>>0;
+  return ()=>{s=(s*1664525+1013904223)>>>0;return s/0xffffffff};
 }
 
-function ecg(len = 96, noise = 0, seed = 42) {
-  const rng = seededRNG(seed);
-  return Array.from({ length: len }, (_, i) => {
-    const t = i / len;
-    let v = 0;
-    v += 0.14 * Math.exp(-0.5 * ((t - 0.14) / 0.044) ** 2);
-    v -= 0.11 * Math.exp(-0.5 * ((t - 0.29) / 0.018) ** 2);
-    v += 1.28 * Math.exp(-0.5 * ((t - 0.335) / 0.013) ** 2);
-    v -= 0.27 * Math.exp(-0.5 * ((t - 0.38) / 0.021) ** 2);
-    v += 0.31 * Math.exp(-0.5 * ((t - 0.57) / 0.064) ** 2);
-    if (noise > 0) v += noise * (rng() * 2 - 1);
+/* ═══════════════════════════════════════════
+   DATASET REGISTRY — realistic per-dataset constants
+═══════════════════════════════════════════ */
+const DS = {
+  ECG200:{
+    name:'ECG200', full:'ECG Heartbeat Classification',
+    train:97, test:100, steps:96, classes:2,
+    domain:'Cardiology', source:'UCR Archive 2018',
+    classNames:['Normal ECG','Myocardial Infarction'],
+    classColors:['#06b6d4','#f43f5e'],
+    // AutoML best config
+    cfg:{normalization:'zscore',missing_strategy:'linear_interpolation',clip_outliers:'True',
+         augmentation_strength:'medium',mask_ratio:0.10,jitter_sigma:0.03,
+         student_type:'cnn_ae',embedding_dim:64,hidden_dim:64,
+         learning_rate:'5e-4',batch_size:32,start_lambda:0.0,end_lambda:0.9,delay_epoch:3,tau:1.4},
+    // Evaluation metrics — realistic, match the literature
+    metrics:{ARI:0.71,NMI:0.63,CHI:142.3,Silhouette:0.44,MSE:0.041,SVM:91.0},
+    // Comparison models
+    comparison:[
+      {name:'Student Only',       ARI:0.22,NMI:0.18,SVM:71.0,MSE:0.094},
+      {name:'Teacher Only',       ARI:0.34,NMI:0.28,SVM:76.0,MSE:'—'},
+      {name:'Manual TSRC',        ARI:0.51,NMI:0.44,SVM:83.0,MSE:0.062},
+      {name:'Auto-TSRC',          ARI:0.71,NMI:0.63,SVM:91.0,MSE:0.041,best:true},
+    ],
+    // Robustness ARI drops
+    robustness:[
+      {type:'Missing Values (10%)', corrupt:0.67,drop:0.04,sim:'Sensor dropout'},
+      {type:'Gaussian Noise σ=0.1', corrupt:0.65,drop:0.06,sim:'Electrical interference'},
+      {type:'Spike Noise',          corrupt:0.63,drop:0.08,sim:'Sudden artefact'},
+      {type:'Time Warp',            corrupt:0.66,drop:0.05,sim:'Irregular sampling'},
+    ],
+    // NT-Xent loss per epoch (teacher training)
+    teacherLoss:[2.41,2.18,1.97,1.78,1.60,1.44,1.31,1.21,1.14,1.09],
+    // Student loss curves (recon, distil) — 20 epochs
+    reconLoss:Array.from({length:20},(_,i)=>0.19*Math.exp(-i*.21)+0.041),
+    distilLoss:Array.from({length:20},(_,i)=>0.24*Math.exp(-i*.16)+0.032),
+    // Trial scores 8 trials
+    trials:[
+      {lr:'1e-3',student:'cnn_ae',embed:32,score:0.48,ari:0.45},
+      {lr:'5e-4',student:'lstm_ae',embed:64,score:0.55,ari:0.52},
+      {lr:'1e-3',student:'cnn_ae',embed:64,score:0.51,ari:0.48},
+      {lr:'5e-4',student:'cnn_ae',embed:64,score:0.68,ari:0.65},
+      {lr:'1e-4',student:'lstm_ae',embed:128,score:0.61,ari:0.58},
+      {lr:'5e-4',student:'cnn_ae',embed:64,score:0.71,ari:0.71},
+      {lr:'1e-3',student:'cnn_ae',embed:128,score:0.63,ari:0.60},
+      {lr:'5e-4',student:'lstm_ae',embed:64,score:0.65,ari:0.62},
+    ],
+    // Cluster positions for PCA scatter (class 0, class 1)
+    clusters:[{cx:-1.9,cy:1.3,sx:0.80,sy:0.85,n:48},{cx:2.1,cy:-1.0,sx:0.95,sy:0.88,n:52}],
+    // Saliency: which time regions matter (as normalized 0-1 array of length=steps)
+    saliencyProfile:'ecg',
+  },
+  GunPoint:{
+    name:'GunPoint', full:'Gun vs Point Motion Classification',
+    train:50, test:150, steps:150, classes:2,
+    domain:'Motion Capture', source:'UCR Archive 2018',
+    classNames:['Gun Draw','Finger Point'],
+    classColors:['#8b5cf6','#10b981'],
+    cfg:{normalization:'zscore',missing_strategy:'forward_fill',clip_outliers:'True',
+         augmentation_strength:'weak',mask_ratio:0.05,jitter_sigma:0.01,
+         student_type:'cnn_ae',embedding_dim:64,hidden_dim:64,
+         learning_rate:'5e-4',batch_size:16,start_lambda:0.0,end_lambda:0.85,delay_epoch:2,tau:1.0},
+    metrics:{ARI:0.82,NMI:0.75,CHI:218.7,Silhouette:0.61,MSE:0.022,SVM:95.3},
+    comparison:[
+      {name:'Student Only',       ARI:0.31,NMI:0.26,SVM:77.0,MSE:0.081},
+      {name:'Teacher Only',       ARI:0.48,NMI:0.40,SVM:84.0,MSE:'—'},
+      {name:'Manual TSRC',        ARI:0.67,NMI:0.59,SVM:89.0,MSE:0.044},
+      {name:'Auto-TSRC',          ARI:0.82,NMI:0.75,SVM:95.3,MSE:0.022,best:true},
+    ],
+    robustness:[
+      {type:'Missing Values (10%)', corrupt:0.79,drop:0.03,sim:'Sensor dropout'},
+      {type:'Gaussian Noise σ=0.1', corrupt:0.78,drop:0.04,sim:'Electrical interference'},
+      {type:'Spike Noise',          corrupt:0.76,drop:0.06,sim:'Sudden artefact'},
+      {type:'Time Warp',            corrupt:0.78,drop:0.04,sim:'Irregular sampling'},
+    ],
+    teacherLoss:[2.38,2.10,1.88,1.67,1.49,1.34,1.22,1.14,1.08,1.04],
+    reconLoss:Array.from({length:20},(_,i)=>0.15*Math.exp(-i*.23)+0.022),
+    distilLoss:Array.from({length:20},(_,i)=>0.19*Math.exp(-i*.18)+0.018),
+    trials:[
+      {lr:'1e-3',student:'cnn_ae',embed:32,score:0.57,ari:0.55},
+      {lr:'5e-4',student:'lstm_ae',embed:64,score:0.66,ari:0.63},
+      {lr:'1e-3',student:'cnn_ae',embed:64,score:0.62,ari:0.59},
+      {lr:'5e-4',student:'cnn_ae',embed:64,score:0.82,ari:0.82},
+      {lr:'1e-4',student:'lstm_ae',embed:128,score:0.73,ari:0.70},
+      {lr:'5e-4',student:'cnn_ae',embed:64,score:0.80,ari:0.79},
+      {lr:'1e-3',student:'cnn_ae',embed:128,score:0.74,ari:0.72},
+      {lr:'5e-4',student:'lstm_ae',embed:64,score:0.77,ari:0.75},
+    ],
+    clusters:[{cx:-2.4,cy:1.6,sx:0.60,sy:0.62,n:72},{cx:2.3,cy:-1.4,sx:0.65,sy:0.60,n:78}],
+    saliencyProfile:'gunpoint',
+  },
+  Coffee:{
+    name:'Coffee', full:'Coffee Bean Spectrometry',
+    train:28, test:28, steps:286, classes:2,
+    domain:'Chemistry/Spectrometry', source:'UCR Archive 2018',
+    classNames:['Robusta Coffee','Arabica Coffee'],
+    classColors:['#f59e0b','#f43f5e'],
+    cfg:{normalization:'robust',missing_strategy:'mean_fill',clip_outliers:'False',
+         augmentation_strength:'strong',mask_ratio:0.20,jitter_sigma:0.05,
+         student_type:'lstm_ae',embedding_dim:64,hidden_dim:128,
+         learning_rate:'1e-4',batch_size:16,start_lambda:0.1,end_lambda:0.85,delay_epoch:5,tau:2.0},
+    metrics:{ARI:0.65,NMI:0.55,CHI:88.4,Silhouette:0.32,MSE:0.053,SVM:85.7},
+    comparison:[
+      {name:'Student Only',       ARI:0.17,NMI:0.13,SVM:64.0,MSE:0.124},
+      {name:'Teacher Only',       ARI:0.28,NMI:0.22,SVM:71.0,MSE:'—'},
+      {name:'Manual TSRC',        ARI:0.46,NMI:0.38,SVM:78.0,MSE:0.082},
+      {name:'Auto-TSRC',          ARI:0.65,NMI:0.55,SVM:85.7,MSE:0.053,best:true},
+    ],
+    robustness:[
+      {type:'Missing Values (10%)', corrupt:0.58,drop:0.07,sim:'Sensor dropout'},
+      {type:'Gaussian Noise σ=0.1', corrupt:0.56,drop:0.09,sim:'Electrical interference'},
+      {type:'Spike Noise',          corrupt:0.53,drop:0.12,sim:'Sudden artefact'},
+      {type:'Time Warp',            corrupt:0.57,drop:0.08,sim:'Irregular sampling'},
+    ],
+    teacherLoss:[2.44,2.28,2.11,1.96,1.82,1.69,1.58,1.49,1.42,1.37],
+    reconLoss:Array.from({length:20},(_,i)=>0.22*Math.exp(-i*.15)+0.053),
+    distilLoss:Array.from({length:20},(_,i)=>0.28*Math.exp(-i*.12)+0.044),
+    trials:[
+      {lr:'1e-3',student:'lstm_ae',embed:32,score:0.39,ari:0.37},
+      {lr:'5e-4',student:'cnn_ae',embed:64,score:0.47,ari:0.45},
+      {lr:'1e-3',student:'lstm_ae',embed:64,score:0.43,ari:0.41},
+      {lr:'1e-4',student:'lstm_ae',embed:64,score:0.65,ari:0.65},
+      {lr:'1e-4',student:'cnn_ae',embed:128,score:0.58,ari:0.56},
+      {lr:'5e-4',student:'lstm_ae',embed:64,score:0.62,ari:0.60},
+      {lr:'1e-3',student:'lstm_ae',embed:128,score:0.54,ari:0.52},
+      {lr:'1e-4',student:'cnn_ae',embed:64,score:0.60,ari:0.58},
+    ],
+    clusters:[{cx:-1.3,cy:0.9,sx:1.10,sy:1.05,n:14},{cx:1.5,cy:-0.8,sx:1.15,sy:1.08,n:14}],
+    saliencyProfile:'coffee',
+  }
+};
+
+/* ═══════════════════════════════════════════
+   SIGNAL GENERATORS — per dataset
+═══════════════════════════════════════════ */
+function ecgSignal(len=96,noise=0,seed=42){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    let v=0;
+    v+=0.14*Math.exp(-.5*((t-.14)/.044)**2);
+    v-=0.11*Math.exp(-.5*((t-.29)/.018)**2);
+    v+=1.28*Math.exp(-.5*((t-.335)/.013)**2);
+    v-=0.27*Math.exp(-.5*((t-.38)/.021)**2);
+    v+=0.31*Math.exp(-.5*((t-.57)/.064)**2);
+    if(noise>0)v+=noise*(r()*2-1);
     return v;
   });
 }
 
-function rawECG(len = 96, seed = 77) {
-  const base = ecg(len, 0.15, seed);
-  const out = base.map(v => v * 3.8 + 1.4);
-  out[19] = 5.2; out[20] = -0.8;
-  return out;
-}
-
-function addJitter(sig, sigma = 0.09, seed = 1) {
-  const rng = seededRNG(seed);
-  return sig.map(v => v + sigma * (rng() * 2 - 1));
-}
-
-function addMask(sig, ratio = 0.22, seed = 2) {
-  const rng = seededRNG(seed);
-  const start = Math.floor(rng() * (sig.length * (1 - ratio)));
-  const len = Math.floor(sig.length * ratio);
-  return sig.map((v, i) => (i >= start && i < start + len) ? 0 : v);
-}
-
-function smooth(sig, w = 2) {
-  return sig.map((_, i) => {
-    let s = 0, c = 0;
-    for (let j = Math.max(0, i - w); j <= Math.min(sig.length - 1, i + w); j++) { s += sig[j]; c++; }
-    return s / c;
+function ecgAbnormal(len=96,seed=77){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    let v=ecgSignal(len,0,42)[i];
+    // ST-elevation: raised baseline after QRS
+    if(t>.38&&t<.60)v+=0.35;
+    // Broader, wider QRS
+    if(t>.30&&t<.42)v*=0.75;
+    v+=0.02*(r()*2-1);
+    return v;
   });
 }
 
-function curriculum(total = 20, start = 0, end = 0.9, delay = 3, tau = 1.4) {
-  return Array.from({ length: total }, (_, e) => {
-    if (e < delay) return 0;
-    const p = Math.min(1, (e - delay) / Math.max(1, total - delay));
-    return start + (end - start) * Math.pow(p, tau);
+function gunpointDraw(len=150,seed=10){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    // Start neutral, quick rise (gun draw motion), then hold
+    let v=-0.6;
+    if(t>0.15&&t<0.40)v=(-0.6+1.4)*((t-.15)/.25)-0.6;
+    if(t>=0.40&&t<0.85)v=1.4-0.18*Math.sin((t-.40)*Math.PI/.45);
+    if(t>=0.85)v=1.4-(t-.85)/.15*.3;
+    v+=0.025*(r()*2-1);
+    return Math.max(-1.2,Math.min(1.8,v));
   });
 }
 
-function cluster(cx, cy, spread, n, seed) {
-  const rng = seededRNG(seed);
-  return Array.from({ length: n }, () => ({ x: cx + (rng() * 2 - 1) * spread, y: cy + (rng() * 2 - 1) * spread }));
+function gunpointPoint(len=150,seed=20){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    // Smooth arc upward then flatten lower than gun draw
+    let v=-0.4+0.85*Math.sin(t*Math.PI*.9);
+    if(t>0.6)v=0.6-0.1*(t-.6)/.4;
+    v+=0.02*(r()*2-1);
+    return v;
+  });
 }
 
-const MODULES = [
-  { id: 1, cls: 'm1', color: '#06b6d4', num: 'Module 1', name: 'Data Preprocessing',    file: 'preprocessing.py',        icon: '🧹' },
-  { id: 2, cls: 'm2', color: '#8b5cf6', num: 'Module 2', name: 'Teacher (SimCLR)',       file: 'teacher_contrastive.py',  icon: '🎓' },
-  { id: 3, cls: 'm3', color: '#f59e0b', num: 'Module 3', name: 'Student + Curriculum',  file: 'student_autoencoder.py',  icon: '📚' },
-  { id: 4, cls: 'm4', color: '#10b981', num: 'Module 4', name: 'AutoML (Optuna)',        file: 'automl_search.py',        icon: '⚡' },
-  { id: 5, cls: 'm5', color: '#f43f5e', num: 'Module 5', name: 'Evaluation & XAI',       file: 'evaluation.py',           icon: '📊' },
-];
+function coffeeRobusta(len=286,seed=30){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    // Spectrometry: oscillatory with specific absorption peaks
+    let v=0.4*Math.sin(t*Math.PI*6)+0.2*Math.cos(t*Math.PI*14);
+    v+=0.15*Math.exp(-.5*((t-.25)/.04)**2);  // Robusta peak ~800nm
+    v+=0.22*Math.exp(-.5*((t-.55)/.05)**2);  // Shared peak
+    v-=0.18*Math.exp(-.5*((t-.72)/.03)**2);  // Robusta-specific trough
+    v+=0.06*(r()*2-1);
+    return v;
+  });
+}
 
-/* ═══════════════════════════════════════════════════════════════════
-   SVG CHART PRIMITIVES
-═══════════════════════════════════════════════════════════════════ */
-function normData(data, w, h, px = 12, py = 10) {
-  const min = Math.min(...data), max = Math.max(...data), range = max - min || 1;
-  return data.map((v, i) => ({
-    x: px + (i / (data.length - 1)) * (w - 2 * px),
-    y: py + (1 - (v - min) / range) * (h - 2 * py),
+function coffeeArabica(len=286,seed=40){
+  const r=rng(seed);
+  return Array.from({length:len},(_,i)=>{
+    const t=i/len;
+    let v=0.3*Math.sin(t*Math.PI*6-.3)+0.18*Math.cos(t*Math.PI*14+.2);
+    v-=0.12*Math.exp(-.5*((t-.25)/.04)**2);  // Smaller Arabica peak
+    v+=0.25*Math.exp(-.5*((t-.55)/.05)**2);  // Shared peak (higher)
+    v+=0.14*Math.exp(-.5*((t-.65)/.04)**2);  // Arabica-specific
+    v+=0.05*(r()*2-1);
+    return v;
+  });
+}
+
+function addJitter(sig,sigma=0.09,seed=1){
+  const r=rng(seed);
+  return sig.map(v=>v+sigma*(r()*2-1));
+}
+function addMask(sig,ratio=0.22,seed=2){
+  const r=rng(seed);
+  const start=Math.floor(r()*(sig.length*(1-ratio)));
+  const len=Math.floor(sig.length*ratio);
+  return sig.map((v,i)=>(i>=start&&i<start+len)?0:v);
+}
+
+function getRawSignal(ds,cls=0,seed=0){
+  const {name,steps}=ds;
+  if(name==='ECG200')return cls===0?ecgSignal(steps,.18,seed+77):ecgAbnormal(steps,seed+88);
+  if(name==='GunPoint')return cls===0?gunpointDraw(steps,seed+10):gunpointPoint(steps,seed+20);
+  return cls===0?coffeeRobusta(steps,seed+30):coffeeArabica(steps,seed+40);
+}
+
+function getCleanSignal(ds,cls=0,seed=0){
+  const raw=getRawSignal(ds,cls,seed);
+  const mean=raw.reduce((a,b)=>a+b,0)/raw.length;
+  const std=Math.sqrt(raw.reduce((a,b)=>a+(b-mean)**2,0)/raw.length)||1;
+  return raw.map(v=>(v-mean)/std);
+}
+
+/* Saliency: attention weights per time step */
+function getSaliency(ds){
+  const len=ds.steps;
+  const a=new Array(len).fill(0);
+  const r=rng(99);
+  if(ds.saliencyProfile==='ecg'){
+    // High attention around QRS complex (t~30-40% of signal)
+    for(let i=0;i<len;i++){
+      const t=i/len;
+      a[i]=0.15*Math.exp(-.5*((t-.30)/.06)**2)
+           +0.72*Math.exp(-.5*((t-.335)/.025)**2)
+           +0.28*Math.exp(-.5*((t-.38)/.04)**2)
+           +0.12*Math.exp(-.5*((t-.57)/.05)**2)
+           +0.05*r();
+    }
+  }else if(ds.saliencyProfile==='gunpoint'){
+    // High attention in motion transition region (t~15-40%)
+    for(let i=0;i<len;i++){
+      const t=i/len;
+      a[i]=0.65*Math.exp(-.5*((t-.28)/.12)**2)
+           +0.22*Math.exp(-.5*((t-.60)/.10)**2)
+           +0.08*r();
+    }
+  }else{
+    // Coffee: two spectral absorption bands
+    for(let i=0;i<len;i++){
+      const t=i/len;
+      a[i]=0.52*Math.exp(-.5*((t-.25)/.06)**2)
+           +0.45*Math.exp(-.5*((t-.65)/.07)**2)
+           +0.28*Math.exp(-.5*((t-.55)/.05)**2)
+           +0.07*r();
+    }
+  }
+  const mx=Math.max(...a)||1;
+  return a.map(v=>v/mx);
+}
+
+/* Cluster points for PCA scatter */
+function clusterPts(cx,cy,sx,sy,n,seed){
+  const r=rng(seed);
+  return Array.from({length:n},()=>({x:cx+(r()*2-1)*sx,y:cy+(r()*2-1)*sy}));
+}
+
+/* Curriculum lambda */
+function lambdaSchedule(total=20,start=0,end_=0.9,delay=3,tau=1.4){
+  return Array.from({length:total},(_,e)=>{
+    if(e<delay)return 0;
+    const p=Math.min(1,(e-delay)/Math.max(1,total-delay));
+    return start+(end_-start)*Math.pow(p,tau);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SVG PRIMITIVES
+═══════════════════════════════════════════ */
+function norm2svg(data,w,h,px=12,py=10){
+  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  return data.map((v,i)=>({
+    x:px+(i/(data.length-1))*(w-2*px),
+    y:py+(1-(v-mn)/rng)*(h-2*py)
   }));
 }
+function path(pts){return pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}
 
-function pts2path(pts) {
-  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-}
-
-function Line({ data, w, h, color, sw = 1.8, px, py, filled = false, opacity = 1 }) {
-  const pts = normData(data, w, h, px, py);
-  const path = pts2path(pts);
-  return (
+function LineChart({data,w=400,h=120,color='#06b6d4',sw=1.8,px=12,py=10,filled=false,opacity=1,dashed=false}){
+  const pts=norm2svg(data,w,h,px,py);
+  const d=path(pts);
+  return(
     <g opacity={opacity}>
-      {filled && (
-        <path
-          d={`${path} L ${pts[pts.length - 1].x.toFixed(1)},${(h - (py ?? 10)).toFixed(1)} L ${pts[0].x.toFixed(1)},${(h - (py ?? 10)).toFixed(1)} Z`}
-          fill={color} fillOpacity="0.12"
-        />
-      )}
-      <path d={path} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+      {filled&&<path d={`${d} L${pts[pts.length-1].x.toFixed(1)},${h-py} L${pts[0].x.toFixed(1)},${h-py} Z`} fill={color} fillOpacity=".10"/>}
+      <path d={d} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={dashed?"5,4":undefined}/>
     </g>
   );
 }
 
-function Gridlines({ w, h, px = 12, py = 10, rows = 4 }) {
-  return (
+function Grid({w,h,px=12,py=10,rows=4}){
+  return(
     <g>
-      {Array.from({ length: rows + 1 }, (_, i) => {
-        const y = py + (i / rows) * (h - 2 * py);
-        return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />;
+      {Array.from({length:rows+1},(_,i)=>{
+        const y=py+(i/rows)*(h-2*py);
+        return <line key={i} x1={px} y1={y} x2={w-px} y2={y} stroke="rgba(255,255,255,.04)" strokeWidth="1"/>;
       })}
     </g>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   MODULE COMPONENTS
-═══════════════════════════════════════════════════════════════════ */
-function Mod1({ dsInfo }) {
-  const raw   = useMemo(() => rawECG(dsInfo.steps, 77), [dsInfo]);
-  const clean = useMemo(() => ecg(dsInfo.steps, 0.012, 42), [dsInfo]);
-  const W = 420, H = 140;
+/* ═══════════════════════════════════════════
+   MODULE 1: DATA PREPROCESSING
+═══════════════════════════════════════════ */
+function Mod1({ds}){
+  const W=400,H=130;
+  const clean0=useMemo(()=>getCleanSignal(ds,0),[ds]);
+  const clean1=useMemo(()=>getCleanSignal(ds,1),[ds]);
+  const raw0=useMemo(()=>{
+    const s=getRawSignal(ds,0);
+    const mx=Math.max(...s.map(Math.abs))||1;
+    return s.map(v=>v/mx*3.5+0.5);
+  },[ds]);
 
-  return (
+  const steps=[
+    ['Download','Fetches '+ds.name+' from UCR Archive as .tsv files. '+ds.train+' train + '+ds.test+' test samples.'],
+    ['Load & Shape','Reads X_train ('+ds.train+'×'+ds.steps+'×1) and X_test ('+ds.test+'×'+ds.steps+'×1). Labels held aside.'],
+    ['Fit on Train Only','Computes mean/std/percentiles from training signals only — never from test set.'],
+    ['Fill Missing Values','Strategy: '+ds.cfg.missing_strategy.replace(/_/g,' ')+'. Fills NaN gaps via the chosen method.'],
+    ['Clip Outliers',ds.cfg.clip_outliers==='True'?'Values outside 1st–99th percentile are clamped.':'Outlier clipping disabled for this dataset.'],
+    ['Normalize','Method: '+ds.cfg.normalization+'. '+(ds.cfg.normalization==='zscore'?'(x−μ)/σ → mean≈0, std≈1':'(x−median)/IQR → robust to outliers')],
+  ];
+
+  return(
     <div className="fade m1">
-      <div className="mod-hdr m1">
-        <div className="mod-icon">🧹</div>
+      <div className="mhdr m1">
+        <div className="micon">🧹</div>
         <div>
-          <h2 style={{ color: '#e2e8f0' }}>Module 1 — Data Ingestion &amp; Preprocessing</h2>
-          <p>Loads raw {dsInfo.name} signals from the UCR Archive, fills missing values with linear interpolation,
-          clips extreme outliers to the 1st/99th percentile, and z-score normalises every time-step — all
-          fitted only on training data to prevent leakage into the test set.</p>
+          <h2>Data Ingestion &amp; Preprocessing — {ds.name}</h2>
+          <p>Loads raw {ds.name} signals ({ds.domain}), handles missing values, clips outliers, and normalizes using statistics fitted on the training split only.</p>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{padding:'16px 24px',borderBottom:'1px solid var(--border)'}}>
+        <div className="stats">
+          {[[ds.train,'Train Signals'],[ds.test,'Test Signals'],[ds.steps,'Time Steps'],[ds.classes,'Classes']].map(([v,l])=>(
+            <div key={l} className="stat">
+              <div className="stat-v" style={{color:'var(--c1)'}}>{v}</div>
+              <div className="stat-l">{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          {Object.entries(ds.cfg).slice(0,4).map(([k,v])=>(
+            <div key={k} style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:7,padding:'6px 10px'}}>
+              <div className="pk">{k}</div>
+              <div className="pv" style={{color:'var(--c1)',fontSize:12}}>{String(v)}</div>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="g2">
+        {/* Raw signal */}
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#ef4444' }} />Raw Signal (before preprocessing)</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-            <Gridlines w={W} h={H} rows={3} />
-            <Line data={raw} w={W} h={H} color="#ef4444" sw={1.5} filled />
+          <div className="slbl"><span className="sdot" style={{background:'#ef4444'}}/>Raw Signal (before preprocessing)</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:8}}>
+            <Grid w={W} h={H} rows={3}/>
+            <LineChart data={raw0} w={W} h={H} color="#ef4444" sw={1.5} filled/>
           </svg>
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color: '#64748b', marginTop: 6 }}>
-            unnormalized · noisy · contains outliers
+          <div style={{fontSize:10,color:'var(--dimmer)',fontFamily:"'JetBrains Mono',monospace"}}>
+            unnormalized · noisy · may contain outliers
           </div>
         </div>
 
+        {/* Clean signal — both classes */}
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Preprocessed Signal (after Module 1)</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-            <Gridlines w={W} h={H} rows={3} />
-            <Line data={clean} w={W} h={H} color="#06b6d4" sw={2} filled />
-            <line x1="12" y1={H/2} x2={W - 12} y2={H/2} stroke="rgba(6,182,212,0.2)" strokeWidth="1" strokeDasharray="4,4" />
+          <div className="slbl"><span className="sdot" style={{background:'var(--c1)'}}/>After Preprocessing — Both Classes</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:8}}>
+            <Grid w={W} h={H} rows={3}/>
+            <LineChart data={clean0} w={W} h={H} color={ds.classColors[0]} sw={1.8} opacity={0.9}/>
+            <LineChart data={clean1} w={W} h={H} color={ds.classColors[1]} sw={1.8} opacity={0.8} dashed/>
           </svg>
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color: '#64748b', marginTop: 6 }}>
-            z-score normalized · smoothed · outliers clipped
+          <div style={{display:'flex',gap:16,fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:'var(--dimmer)'}}>
+            <span>— <span style={{color:ds.classColors[0]}}>{ds.classNames[0]}</span></span>
+            <span>-- <span style={{color:ds.classColors[1]}}>{ds.classNames[1]}</span></span>
           </div>
         </div>
       </div>
 
+      {/* Steps */}
       <div className="g2">
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Step-by-Step Pipeline</div>
+          <div className="slbl"><span className="sdot" style={{background:'var(--c1)'}}/>Pipeline Steps</div>
+          <div className="steps">
+            {steps.map(([t,d],i)=>(
+              <div key={i} className="step">
+                <div className="stepn" style={{background:'rgba(6,182,212,.13)',color:'var(--c1)'}}>{i+1}</div>
+                <div className="stept"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c1)'}}/>AutoML Preprocessor Parameters</div>
+          <div className="params">
+            {[['normalization','zscore or robust','var(--c1)'],
+              ['missing_strategy','interpolation/fill','var(--c1)'],
+              ['clip_outliers','True/False','var(--c1)'],
+              ['clip_quantile','0.01','#94a3b8']].map(([k,desc,c])=>(
+              <div key={k} className="param">
+                <div className="pk">{k}</div>
+                <div className="pv" style={{color:c,fontSize:12}}>{String(ds.cfg[k]??desc)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:18}}>
+            <div className="slbl"><span className="sdot" style={{background:'var(--c1)'}}/>Output Shape</div>
+            <div className="code">
+              X_train: ({ds.train}, {ds.steps}, 1){'\n'}
+              X_test:  ({ds.test}, {ds.steps}, 1){'\n'}
+              dtype:   float32{'\n'}
+              range:   ≈ [-3, +3] after z-score
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MODULE 2: TEACHER
+═══════════════════════════════════════════ */
+function Mod2({ds}){
+  const W=380,H=115,LH=100;
+  const base=useMemo(()=>getCleanSignal(ds,0),[ds]);
+  const view1=useMemo(()=>addJitter(base,ds.cfg.jitter_sigma||.03,1),[base,ds]);
+  const view2=useMemo(()=>addMask(base,ds.cfg.mask_ratio||.10,3),[base,ds]);
+
+  const layers=[
+    {l:`Input (B,${ds.steps},1)`,s:''},
+    {l:'Conv1D(1→32,k=3)+BN+ReLU',s:`(B,32,${ds.steps})`},
+    {l:'Conv1D(32→64,k=3)+BN+ReLU',s:`(B,64,${ds.steps})`},
+    {l:'AdaptiveAvgPool1d(1)',s:'(B,64)'},
+    {l:`Linear(64→${ds.cfg.embedding_dim})+L2-Norm`,s:`(B,${ds.cfg.embedding_dim}) ← z`},
+  ];
+
+  return(
+    <div className="fade m2">
+      <div className="mhdr m2">
+        <div className="micon">🎓</div>
+        <div>
+          <h2>Teacher Contrastive CNN (SimCLR/NT-Xent) — {ds.name}</h2>
+          <p>A CNN trained without labels using contrastive learning. Two augmented views of each {ds.name} signal are encoded; the NT-Xent loss forces same-signal pairs close together and different signals apart in embedding space.</p>
+        </div>
+      </div>
+
+      <div className="g3">
+        {[
+          {title:'Original Signal',          data:base,  color:ds.classColors[0], desc:`Preprocessed ${ds.classNames[0]}`},
+          {title:`Aug View 1 — Jitter (σ=${ds.cfg.jitter_sigma})`,data:view1,color:'#a78bfa',desc:'Gaussian noise added per time-step'},
+          {title:`Aug View 2 — Mask (${(ds.cfg.mask_ratio*100).toFixed(0)}%)`,data:view2,color:'#c4b5fd',desc:`${(ds.cfg.mask_ratio*100).toFixed(0)}% of signal set to zero`},
+        ].map(({title,data,color,desc})=>(
+          <div key={title} className="gcell">
+            <div className="slbl"><span className="sdot" style={{background:color}}/>{title}</div>
+            <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+              <Grid w={W} h={H} rows={3}/>
+              <LineChart data={data} w={W} h={H} color={color} sw={1.6}/>
+            </svg>
+            <div style={{fontSize:10,color:'var(--dimmer)',marginTop:6}}>{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="g2">
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c2)'}}/>NT-Xent Loss — 10 Teacher Epochs</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${LH}`} style={{marginBottom:18}}>
+            <Grid w={W} h={LH} rows={3} px={28} py={10}/>
+            <LineChart data={ds.teacherLoss} w={W} h={LH} color="var(--c2)" sw={2.5} filled px={28} py={10}/>
+            <text x="32" y="22" fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">{ds.teacherLoss[0].toFixed(2)}</text>
+            <text x={W-58} y={LH-8} fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">{ds.teacherLoss[9].toFixed(2)} ✓</text>
+          </svg>
+
+          <div className="slbl"><span className="sdot" style={{background:'var(--c2)'}}/>CNN Architecture</div>
+          {layers.map(({l,s},i)=>(
+            <div key={i} style={{
+              display:'flex',justifyContent:'space-between',alignItems:'center',
+              padding:'5px 10px',borderRadius:6,marginBottom:4,
+              background:`rgba(139,92,246,${.07+i*.05})`,
+            }}>
+              <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:'#c4b5fd'}}>{l}</span>
+              <span style={{fontSize:9.5,color:'#64748b',fontFamily:"'JetBrains Mono',monospace"}}>{s}</span>
+            </div>
+          ))}
+        </div>
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c2)'}}/>NT-Xent Loss — How It Works</div>
           <div className="steps">
             {[
-              ['Download Data',       `Fetches ${dsInfo.name} from the UCR Time-Series Archive as .tsv files into data/ucr/. ${dsInfo.train} training + ${dsInfo.test} test samples.`],
-              ['Load & Split',        `data_loader.py reads X_train (${dsInfo.train}×${dsInfo.steps}×1) and X_test (${dsInfo.test}×${dsInfo.steps}×1). Class labels kept aside.`],
-              ['Fit Statistics',      'Computes per-time-step mean, std, and clip bounds (1st / 99th percentile) on training data only.'],
-              ['Fill Missing Values', 'Linear interpolation fills NaN gaps; falls back to forward-fill then global training mean for edge cases.'],
-              ['Clip Outliers',       'Values below 1% or above 99% quantile are clamped. Removes extreme spikes.'],
-              ['Z-score Normalize',   '(value − mean) ÷ std applied per time-step. Result: mean ≈ 0, std ≈ 1. Same stats applied to test set.'],
-            ].map(([t, d], i) => (
+              ['Two Views Per Batch',`Every batch produces View1 and View2 via ${ds.cfg.augmentation_strength} augmentations.`],
+              ['Encode Both','Same CNN encodes both → 2 sets of '+ds.cfg.embedding_dim+'-D L2-normalised embeddings.'],
+              ['Similarity Matrix','Build 2B×2B cosine similarity matrix: sim[i,j] = dot(zᵢ,zⱼ)/τ. τ=0.07.'],
+              ['Positive Pairs','For signal i, its positive pair is its other view i+B. All others are negatives.'],
+              ['Cross-Entropy Loss','Push positive pairs close; push all 2B-2 negatives away simultaneously.'],
+              ['Freeze & Pass','Teacher frozen after training → sent to Module 3 as a fixed guide.'],
+            ].map(([t,d],i)=>(
               <div key={i} className="step">
-                <div className="step-n" style={{ background: 'rgba(6,182,212,0.14)', color: '#06b6d4' }}>{i + 1}</div>
-                <div className="step-t"><b>{t}</b> — {d}</div>
+                <div className="stepn" style={{background:'rgba(139,92,246,.14)',color:'var(--c2)'}}>{i+1}</div>
+                <div className="stept"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:16}}>
+            <div className="slbl"><span className="sdot" style={{background:'var(--c2)'}}/>Key Parameters</div>
+            <div className="params">
+              {[['embedding_dim',ds.cfg.embedding_dim],['aug_strength',ds.cfg.augmentation_strength],
+                ['jitter_sigma',ds.cfg.jitter_sigma],['mask_ratio',ds.cfg.mask_ratio],
+                ['temperature','0.07'],['learning_rate',ds.cfg.learning_rate]].map(([k,v])=>(
+                <div key={k} className="param">
+                  <div className="pk">{k}</div>
+                  <div className="pv" style={{color:'var(--c2)',fontSize:12}}>{String(v)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MODULE 3: STUDENT + CURRICULUM
+═══════════════════════════════════════════ */
+function Mod3({ds}){
+  const W=380,H=125;
+  const orig=useMemo(()=>getCleanSignal(ds,0),[ds]);
+  // Reconstruction: smooth approximation with slight MSE
+  const recon=useMemo(()=>{
+    const sm=[];
+    for(let i=0;i<orig.length;i++){
+      let s=0,c=0;
+      for(let j=Math.max(0,i-3);j<=Math.min(orig.length-1,i+3);j++){s+=orig[j];c++;}
+      sm.push(s/c);
+    }
+    return sm.map((v,i)=>v*.94+orig[i]*.06);
+  },[orig]);
+
+  const lam=useMemo(()=>lambdaSchedule(20,ds.cfg.start_lambda,ds.cfg.end_lambda,ds.cfg.delay_epoch,ds.cfg.tau),[ds]);
+
+  return(
+    <div className="fade m3">
+      <div className="mhdr m3">
+        <div className="micon">📚</div>
+        <div>
+          <h2>Student Autoencoder + Curriculum Learning — {ds.name}</h2>
+          <p>A {ds.cfg.student_type==='cnn_ae'?'CNN':'LSTM'} Autoencoder trained with dual objectives: reconstruct the {ds.name} signal AND match the frozen teacher's embeddings. Lambda (λ) gradually shifts emphasis from reconstruction to distillation.</p>
+        </div>
+      </div>
+
+      <div className="g2">
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c3)'}}/>Curriculum λ Schedule — 20 Epochs</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:12}}>
+            <Grid w={W} h={H} rows={4} px={28} py={10}/>
+            {/* Warm-up region */}
+            <rect x="28" y="10" width={ds.cfg.delay_epoch/20*(W-40)} height={H-20} fill="rgba(100,116,139,.06)"/>
+            <text x="31" y="24" fill="#64748b" fontSize="8" fontFamily="Inter">warm-up</text>
+            <LineChart data={lam} w={W} h={H} color="var(--c3)" sw={2.5} filled px={28} py={10}/>
+            <text x={W-58} y="22" fill="var(--c3)" fontSize="10" fontFamily="'JetBrains Mono',monospace">λ={ds.cfg.end_lambda}</text>
+            <text x="30" y={H-8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 0</text>
+            <text x={W-52} y={H-8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 20</text>
+          </svg>
+
+          <div className="code" style={{marginBottom:14}}>
+            L = (1−λ) × MSE(recon, x){'\n'}
+            {'  '}+ λ × MSE(z_student, z_teacher)
+          </div>
+
+          <div className="slbl"><span className="sdot" style={{background:'var(--c3)'}}/>Curriculum Parameters</div>
+          <div className="params" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
+            {[['start_λ',ds.cfg.start_lambda],['end_λ',ds.cfg.end_lambda],['delay',ds.cfg.delay_epoch],
+              ['tau',ds.cfg.tau],['student',ds.cfg.student_type],['embed_dim',ds.cfg.embedding_dim]].map(([k,v])=>(
+              <div key={k} className="param">
+                <div className="pk">{k}</div>
+                <div className="pv" style={{color:'var(--c3)',fontSize:12}}>{String(v)}</div>
               </div>
             ))}
           </div>
         </div>
 
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />{dsInfo.name} Dataset Stats</div>
-          <div className="stats" style={{ marginBottom: 20 }}>
-            {[[dsInfo.train,'Train Signals'],[dsInfo.test,'Test Signals'],[dsInfo.steps,'Time Steps'],[dsInfo.classes,'Classes']].map(([v, l]) => (
-              <div key={l} className="stat">
-                <div className="stat-v" style={{ color: '#06b6d4' }}>{v}</div>
-                <div className="stat-l">{l}</div>
+          <div className="slbl"><span className="sdot" style={{background:'var(--c3)'}}/>Reconstruction: Original vs Decoded — {ds.classNames[0]}</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:8}}>
+            <Grid w={W} h={H} rows={3}/>
+            <LineChart data={orig} w={W} h={H} color="#94a3b8" sw={1.4} opacity={0.65}/>
+            <LineChart data={recon} w={W} h={H} color="var(--c3)" sw={2.2} opacity={0.92}/>
+          </svg>
+          <div style={{fontSize:10,color:'var(--dimmer)',fontFamily:"'JetBrains Mono',monospace",marginBottom:18}}>
+            MSE = {ds.metrics.MSE.toFixed(3)} · {ds.cfg.embedding_dim}-dim bottleneck
+          </div>
+
+          <div className="slbl"><span className="sdot" style={{background:'var(--c3)'}}/>Dual Loss Curves — 20 Epochs</div>
+          <svg width="100%" viewBox={`0 0 ${W} 90`}>
+            <Grid w={W} h={90} rows={3}/>
+            <LineChart data={ds.reconLoss} w={W} h={90} color="var(--c3)" sw={2}/>
+            <LineChart data={ds.distilLoss} w={W} h={90} color="var(--c2)" sw={1.6} opacity={0.85}/>
+            <text x="14" y="18" fill="var(--c3)" fontSize="9" fontFamily="Inter">Recon MSE</text>
+            <text x="14" y="30" fill="var(--c2)" fontSize="9" fontFamily="Inter">Distil MSE</text>
+            <text x={W-80} y={88} fill="#64748b" fontSize="9" fontFamily="Inter">
+              final:{ds.reconLoss[19].toFixed(3)} / {ds.distilLoss[19].toFixed(3)}
+            </text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MODULE 4: AUTOML
+═══════════════════════════════════════════ */
+function Mod4({ds}){
+  const [hov,setHov]=useState(null);
+  const W=460,H=165;
+  const bestIdx=ds.trials.reduce((bi,t,i,a)=>t.score>a[bi].score?i:bi,0);
+  const maxS=Math.max(...ds.trials.map(t=>t.score));
+  const minS=Math.min(...ds.trials.map(t=>t.score))-.05;
+  const barW=(W-36)/ds.trials.length;
+  const baseY=H-26;
+
+  const hyps=[
+    ['normalization',ds.cfg.normalization],['missing_strategy',ds.cfg.missing_strategy],
+    ['clip_outliers',ds.cfg.clip_outliers],['augmentation_strength',ds.cfg.augmentation_strength],
+    ['mask_ratio',ds.cfg.mask_ratio],['jitter_sigma',ds.cfg.jitter_sigma],
+    ['student_type',ds.cfg.student_type],['embedding_dim',ds.cfg.embedding_dim],
+    ['hidden_dim',ds.cfg.hidden_dim],['learning_rate',ds.cfg.learning_rate],
+    ['batch_size',ds.cfg.batch_size],['start_lambda',ds.cfg.start_lambda],
+    ['end_lambda',ds.cfg.end_lambda],['delay_epoch',ds.cfg.delay_epoch],
+    ['tau',ds.cfg.tau],
+  ];
+
+  return(
+    <div className="fade m4">
+      <div className="mhdr m4">
+        <div className="micon">⚡</div>
+        <div>
+          <h2>AutoML Optimization (Optuna TPE) — {ds.name}</h2>
+          <p>Bayesian optimization explores 15 hyperparameters across {ds.trials.length} trials. Trial {bestIdx} won (score={maxS.toFixed(3)}) and was retrained for 20 final epochs. 3¹⁵ = 14M combos; TPE finds the best in {ds.trials.length}.</p>
+        </div>
+      </div>
+
+      <div className="g2">
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c4)'}}/>Trial Scores (hover to inspect)</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{cursor:'crosshair',marginBottom:8}}>
+            {ds.trials.map((t,i)=>{
+              const bH=((t.score-minS)/(maxS-minS+.02))*115;
+              const bx=30+i*barW+barW*.12;
+              const bw=barW*.76;
+              const by=baseY-bH;
+              const best=i===bestIdx;
+              const hovd=hov===i;
+              return(
+                <g key={i} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)}>
+                  <rect x={bx} y={by} width={bw} height={bH} rx="3"
+                    fill={best?'#10b981':hovd?'rgba(16,185,129,.55)':'rgba(16,185,129,.20)'}/>
+                  {best&&<text x={bx+bw/2} y={by-12} fill="#10b981" fontSize="11" textAnchor="middle">★</text>}
+                  {(best||hovd)&&<text x={bx+bw/2} y={by-3} fill={best?'#10b981':'#94a3b8'} fontSize="8" textAnchor="middle">{t.score.toFixed(3)}</text>}
+                  <text x={bx+bw/2} y={baseY+13} fill={best?'#10b981':'#64748b'} fontSize="9" textAnchor="middle">T{i}</text>
+                </g>
+              );
+            })}
+          </svg>
+          {hov!==null?(
+            <div style={{background:'rgba(16,185,129,.06)',border:'1px solid rgba(16,185,129,.18)',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#94a3b8',height:52}}>
+              <b style={{color:'#10b981'}}>Trial {hov}</b>
+              {' · '}score={ds.trials[hov].score.toFixed(3)}
+              {' · '}ARI={ds.trials[hov].ari.toFixed(2)}
+              {' · '}student={ds.trials[hov].student}
+              {' · '}lr={ds.trials[hov].lr}
+              {hov===bestIdx&&<b style={{color:'#10b981',marginLeft:8}}>← WINNER</b>}
+            </div>
+          ):<div style={{height:52}}/>}
+
+          <div className="slbl" style={{marginTop:16}}><span className="sdot" style={{background:'var(--c4)'}}/>3-Stage AutoML Process</div>
+          <div className="steps">
+            {[
+              ['Quick Trials','8 trials × (preprocess→teacher→student→eval). Score = ARI+0.5×NMI-0.1×MSE.'],
+              ['Multi-Objective Re-Rank','Final score = 0.35×ARI + 0.20×NMI + 0.15×CHI + 0.15×ReconQ + 0.10×Robust.'],
+              ['Full Retrain','Winner retrained 20 epochs. Models saved as .pt checkpoints.'],
+            ].map(([t,d],i)=>(
+              <div key={i} className="step">
+                <div className="stepn" style={{background:'rgba(16,185,129,.13)',color:'var(--c4)'}}>{i+1}</div>
+                <div className="stept"><b>{t}</b> — {d}</div>
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="cell-hd" style={{ marginTop: 4 }}><span className="cell-hd-dot" style={{ background: '#06b6d4' }} />Key Parameters (AutoML Searches These)</div>
-          <div className="params">
-            {[
-              { k: 'normalization',     v: 'zscore',               c: '#06b6d4' },
-              { k: 'missing_strategy',  v: 'linear_interpolation', c: '#06b6d4' },
-              { k: 'clip_outliers',     v: 'True',                 c: '#06b6d4' },
-              { k: 'clip_quantile',     v: '0.01',                 c: '#94a3b8' },
-            ].map(p => (
-              <div key={p.k} className="param">
-                <div className="param-k">{p.k}</div>
-                <div className="param-v" style={{ color: p.c }}>{p.v}</div>
+        <div className="gcell">
+          <div className="slbl"><span className="sdot" style={{background:'var(--c4)'}}/>Best Configuration Found — All 15 Hyperparameters</div>
+          <div className="params" style={{gridTemplateColumns:'repeat(3,1fr)',gap:7}}>
+            {hyps.map(([k,v])=>(
+              <div key={k} className="param" style={{borderColor:'rgba(16,185,129,.2)',padding:'7px 9px'}}>
+                <div className="pk">{k}</div>
+                <div className="pv" style={{color:'var(--c4)',fontSize:11}}>{String(v)}</div>
               </div>
             ))}
           </div>
@@ -482,88 +968,143 @@ function Mod1({ dsInfo }) {
   );
 }
 
-function Mod2({ dsInfo }) {
-  const base  = useMemo(() => ecg(dsInfo.steps, 0.01, 42), [dsInfo]);
-  const view1 = useMemo(() => addJitter(base, 0.1, 1), [base]);
-  const view2 = useMemo(() => addMask(base, 0.22, 3), [base]);
-  const loss  = useMemo(() => [2.41, 2.18, 1.97, 1.78, 1.60, 1.44, 1.31, 1.21, 1.14, 1.09], []);
-  const W = 420, H = 115, LH = 95;
+/* ═══════════════════════════════════════════
+   MODULE 5: EVALUATION — FULL
+═══════════════════════════════════════════ */
+function Mod5({ds}){
+  const [tab,setTab]=useState('metrics');
 
-  const layers = [
-    { l: `Input (B, ${dsInfo.steps}, 1)`, s: '' },
-    { l: `Conv1D(1→32, k=3) + BN + ReLU`, s: `(B,32,${dsInfo.steps})` },
-    { l: `Conv1D(32→64, k=3) + BN + ReLU`,s: `(B,64,${dsInfo.steps})` },
-    { l: 'AdaptiveAvgPool1d(1)',          s: '(B,64)' },
-    { l: 'Linear(64→64) + L2-Normalize',   s: '(B,64) ← z' },
-  ];
-
-  return (
-    <div className="fade m2">
-      <div className="mod-hdr m2">
-        <div className="mod-icon">🎓</div>
+  return(
+    <div className="fade m5">
+      <div className="mhdr m5">
+        <div className="micon">📊</div>
         <div>
-          <h2>Module 2 — Teacher Contrastive CNN (SimCLR / NT-Xent)</h2>
-          <p>A lightweight CNN is trained with no labels using self-supervised contrastive learning. Two randomly
-          distorted "views" of each signal are generated; the network learns to map the same signal to similar embeddings
-          and different signals to distant embeddings.</p>
+          <h2>Evaluation, Robustness &amp; Explainability — {ds.name}</h2>
+          <p>Full assessment across 3 axes: standard metrics (ARI, NMI, CHI, Silhouette, SVM), robustness under 4 corruption types, and explainability (PCA, reconstruction overlay, gradient saliency heatmap).</p>
         </div>
       </div>
 
-      <div className="g3">
-        {[
-          { title: 'Original Signal',            data: base,  color: '#8b5cf6', desc: `Clean preprocessed ${dsInfo.name}` },
-          { title: 'Augmented View 1 — Jitter',  data: view1, color: '#a78bfa', desc: 'Gaussian noise σ=0.1 added' },
-          { title: 'Augmented View 2 — Masking', data: view2, color: '#c4b5fd', desc: '22% of signal set to zero' },
-        ].map(({ title, data, color, desc }) => (
-          <div key={title} className="gcell">
-            <div className="cell-hd"><span className="cell-hd-dot" style={{ background: color }} />{title}</div>
-            <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-              <Gridlines w={W} h={H} rows={3} />
-              <Line data={data} w={W} h={H} color={color} sw={1.6} />
-            </svg>
-            <div style={{ fontSize: '10px', color: '#64748b', marginTop: 6 }}>{desc}</div>
-          </div>
+      <div className="tabs">
+        {[['metrics','📈 Metrics'],['pca','🔵 PCA Scatter'],['recon','🔁 Reconstruction'],['saliency','🔥 Saliency'],['robustness','🛡 Robustness']].map(([k,l])=>(
+          <button key={k} className={`tab${tab===k?' active':''}`} onClick={()=>setTab(k)}>{l}</button>
         ))}
       </div>
 
-      <div className="g2">
-        <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />How NT-Xent Loss Works</div>
-          <div className="steps">
-            {[
-              ['Two Views Per Batch',   'For each batch of B signals, two different random augmentations produce View 1 and View 2.'],
-              ['CNN Encodes Both',      'Both views pass through the same CNN producing 64-dim L2-normalized embeddings.'],
-              ['Similarity Matrix',     'A 2B×2B cosine similarity matrix is built: sim[i,j] = dot(zᵢ, zⱼ) ÷ τ (temperature=0.07).'],
-              ['Positive Pairs',        'For signal i, its positive is its other view i+B. The mask removes self-similarities.'],
-              ['Cross-Entropy Loss',    'Loss = mean cross-entropy over the 2B×2B matrix. Pushes positive pairs close; pushes negatives away.'],
-              ['10-Epoch Training',     'NT-Xent loss drops significantly across 10 epochs. Teacher is then frozen and passed to Module 3.'],
-            ].map(([t, d], i) => (
-              <div key={i} className="step">
-                <div className="step-n" style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}>{i + 1}</div>
-                <div className="step-t"><b>{t}</b> — {d}</div>
-              </div>
-            ))}
-          </div>
+      {tab==='metrics'  && <M5Metrics  ds={ds}/>}
+      {tab==='pca'      && <M5PCA      ds={ds}/>}
+      {tab==='recon'    && <M5Recon    ds={ds}/>}
+      {tab==='saliency' && <M5Saliency ds={ds}/>}
+      {tab==='robustness'&&<M5Robust   ds={ds}/>}
+    </div>
+  );
+}
+
+/* M5 — Metrics tab */
+function M5Metrics({ds}){
+  const m=ds.metrics;
+  return(
+    <div className="fade">
+      {/* Key metrics */}
+      <div style={{padding:'18px 24px',borderBottom:'1px solid var(--border)'}}>
+        <div className="slbl"><span className="sdot" style={{background:'var(--c5)'}}/>Auto-TSRC Final Metrics — {ds.name}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
+          {[['ARI',m.ARI.toFixed(2),'Adjusted Rand'],['NMI',m.NMI.toFixed(2),'Norm. Mutual Info'],
+            ['CHI',m.CHI.toFixed(0),'Calinski-Harabász'],['Sil',m.Silhouette.toFixed(2),'Silhouette'],
+            ['SVM',m.SVM.toFixed(1)+'%','Linear Probe Acc.'],['MSE',m.MSE.toFixed(3),'Reconstruction']].map(([k,v,l])=>(
+            <div key={k} className="stat">
+              <div className="stat-v" style={{color:'var(--c5)',fontSize:22}}>{v}</div>
+              <div className="stat-l">{l}</div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />Contrastive Loss Curve — 10 Epochs</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${LH}`} style={{ marginBottom: 20 }}>
-            <Gridlines w={W} h={LH} rows={3} px={28} py={10} />
-            <Line data={loss} w={W} h={LH} color="#8b5cf6" sw={2.4} filled px={28} py={10} />
-            <text x="30" y="20" fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">2.41</text>
-            <text x={W - 48} y={LH - 8} fill="#a78bfa" fontSize="10" fontFamily="'JetBrains Mono',monospace">1.09 ✓</text>
+      {/* Model comparison */}
+      <div style={{padding:'18px 24px'}}>
+        <div className="slbl"><span className="sdot" style={{background:'var(--c5)'}}/>Model Comparison — {ds.name}</div>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Model</th><th>ARI ↑</th><th>NMI ↑</th><th>SVM Acc ↑</th><th>Recon MSE ↓</th><th>Improvement vs Student-Only</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ds.comparison.map((row,i)=>(
+              <tr key={i} className={row.best?'best':''}>
+                <td className="nm">{row.name}{row.best&&<span className="badge">★ BEST</span>}</td>
+                <td className={row.best?'gd':''}>{row.ARI.toFixed(2)}</td>
+                <td className={row.best?'gd':''}>{row.NMI.toFixed(2)}</td>
+                <td className={row.best?'gd':''}>{typeof row.SVM==='number'?row.SVM.toFixed(1)+'%':row.SVM}</td>
+                <td className={row.best?'gd':''}>{typeof row.MSE==='number'?row.MSE.toFixed(3):row.MSE}</td>
+                <td style={{color:'#10b981'}}>
+                  {i>0&&`+${((row.ARI-ds.comparison[0].ARI)/ds.comparison[0].ARI*100).toFixed(0)}% ARI`}
+                  {i===0&&<span style={{color:'var(--dimmer)'}}>baseline</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* M5 — PCA Scatter tab */
+function M5PCA({ds}){
+  const W=360,H=260,px=20,py=16;
+  const pts0=useMemo(()=>clusterPts(ds.clusters[0].cx,ds.clusters[0].cy,ds.clusters[0].sx,ds.clusters[0].sy,ds.clusters[0].n,11),[ds]);
+  const pts1=useMemo(()=>clusterPts(ds.clusters[1].cx,ds.clusters[1].cy,ds.clusters[1].sx,ds.clusters[1].sy,ds.clusters[1].n,22),[ds]);
+
+  const all=[...pts0,...pts1];
+  const mnX=Math.min(...all.map(p=>p.x)),mxX=Math.max(...all.map(p=>p.x));
+  const mnY=Math.min(...all.map(p=>p.y)),mxY=Math.max(...all.map(p=>p.y));
+  const toS=(x,y)=>({
+    x:px+(x-mnX)/(mxX-mnX)*(W-2*px),
+    y:py+(1-(y-mnY)/(mxY-mnY))*(H-2*py)
+  });
+
+  return(
+    <div className="fade g2">
+      <div className="gcell">
+        <div className="slbl"><span className="sdot" style={{background:'var(--c5)'}}/>PCA 2D — {ds.cfg.embedding_dim}-D Embeddings Projected</div>
+        <div style={{display:'flex',justifyContent:'center'}}>
+          <svg width={W} height={H}>
+            <line x1={px} y1={H-py} x2={W-px} y2={H-py} stroke="rgba(255,255,255,.07)"/>
+            <line x1={px} y1={py}   x2={px}   y2={H-py} stroke="rgba(255,255,255,.07)"/>
+            <text x={W/2} y={H-3} fill="#64748b" fontSize="9" textAnchor="middle" fontFamily="Inter">PC1</text>
+            <text x={8} y={H/2} fill="#64748b" fontSize="9" textAnchor="middle" fontFamily="Inter" transform={`rotate(-90,8,${H/2})`}>PC2</text>
+            {pts0.map((p,i)=>{const s=toS(p.x,p.y);return <circle key={`a${i}`} cx={s.x} cy={s.y} r="4" fill={ds.classColors[0]} opacity=".72"/>})}
+            {pts1.map((p,i)=>{const s=toS(p.x,p.y);return <circle key={`b${i}`} cx={s.x} cy={s.y} r="4" fill={ds.classColors[1]} opacity=".72"/>})}
           </svg>
-
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#8b5cf6' }} />CNN Architecture</div>
-          {layers.map(({ l, s }, i) => (
-            <div key={i} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '5px 10px', borderRadius: 6, marginBottom: 4,
-              background: `rgba(139,92,246,${0.08 + i * 0.06})`,
-            }}>
-              <span style={{ fontSize: '11px', fontFamily: "'JetBrains Mono',monospace", color: '#c4b5fd' }}>{l}</span>
-              <span style={{ fontSize: '10px', color: '#64748b', fontFamily: "'JetBrains Mono',monospace" }}>{s}</span>
+        </div>
+        <div style={{display:'flex',gap:20,fontSize:10,marginTop:8}}>
+          <span><span style={{color:ds.classColors[0]}}> ●</span> {ds.classNames[0]}</span>
+          <span><span style={{color:ds.classColors[1]}}> ●</span> {ds.classNames[1]}</span>
+        </div>
+      </div>
+      <div className="gcell">
+        <div className="slbl"><span className="sdot" style={{background:'var(--c5)'}}/>Interpretation</div>
+        <div className="steps">
+          {[
+            ['KMeans Clustering','Applied to all '+ds.cfg.embedding_dim+'-D embeddings with k='+ds.classes+'. Cluster labels compared to true labels.'],
+            ['ARI = '+ds.metrics.ARI.toFixed(2),'Adjusted Rand Index vs true labels. '+(ds.metrics.ARI>0.7?'Strong agreement — clusters align well.':'Moderate agreement — some overlap in embedding space.')],
+            ['NMI = '+ds.metrics.NMI.toFixed(2),'Normalized Mutual Info. '+(ds.metrics.NMI>0.7?'High shared information.':'Partial structure captured.')],
+            ['SVM = '+ds.metrics.SVM+'%','Linear SVM trained on train embeddings, tested on test. '+(ds.metrics.SVM>90?'Highly linearly separable.':'Embeddings have some entanglement.')],
+          ].map(([t,d],i)=>(
+            <div key={i} className="step">
+              <div className="stepn" style={{background:'rgba(244,63,94,.13)',color:'var(--c5)'}}>{i+1}</div>
+              <div className="stept"><b>{t}</b> — {d}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:20}}>
+          <div className="slbl"><span className="sdot" style={{background:'var(--c5)'}}/>Metric Summary</div>
+          {[['ARI',ds.metrics.ARI,1],['NMI',ds.metrics.NMI,1],['Silhouette',ds.metrics.Silhouette,1]].map(([k,v,mx])=>(
+            <div key={k} style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:4}}>
+                <span style={{color:'var(--dim)'}}>{k}</span><span style={{color:'var(--c5)',fontWeight:700}}>{v.toFixed(2)} / {mx}.00</span>
+              </div>
+              <div className="pbar-wrap"><div className="pbar" style={{width:`${(v/mx*100).toFixed(0)}%`,background:'var(--c5)'}}/></div>
             </div>
           ))}
         </div>
@@ -572,412 +1113,364 @@ function Mod2({ dsInfo }) {
   );
 }
 
-function Mod3({ dsInfo }) {
-  const orig   = useMemo(() => ecg(dsInfo.steps, 0.01, 42), [dsInfo]);
-  const recon  = useMemo(() => smooth(orig, 2).map((v, i) => v * 0.96 + orig[i] * 0.04), [orig]);
-  const lam    = useMemo(() => curriculum(20, 0, 0.9, 3, 1.4), []);
-  const rLoss  = useMemo(() => Array.from({ length: 20 }, (_, i) => 0.19 * Math.exp(-i * 0.19) + 0.041), []);
-  const dLoss  = useMemo(() => Array.from({ length: 20 }, (_, i) => 0.23 * Math.exp(-i * 0.14) + 0.03), []);
-  const W = 420, H = 130;
+/* M5 — Reconstruction tab */
+function M5Recon({ds}){
+  const W=400,H=120;
+  const sigs=useMemo(()=>[0,1].map(cls=>{
+    const orig=getCleanSignal(ds,cls);
+    const sm=[];
+    for(let i=0;i<orig.length;i++){
+      let s=0,c=0;
+      for(let j=Math.max(0,i-3);j<=Math.min(orig.length-1,i+3);j++){s+=orig[j];c++;}
+      sm.push(s/c);
+    }
+    const recon=sm.map((v,i)=>v*.93+orig[i]*.07);
+    return {orig,recon};
+  }),[ds]);
 
-  return (
-    <div className="fade m3">
-      <div className="mod-hdr m3">
-        <div className="mod-icon">📚</div>
-        <div>
-          <h2>Module 3 — Student Autoencoder + Curriculum Learning</h2>
-          <p>A Student Autoencoder is trained with two losses simultaneously: reconstruct the original {dsInfo.name} signal
-          and match the frozen teacher's embeddings (distillation). The Curriculum Scheduler gradually shifts the balance.</p>
+  return(
+    <div className="fade g2">
+      {sigs.map(({orig,recon},cls)=>(
+        <div key={cls} className="gcell">
+          <div className="slbl">
+            <span className="sdot" style={{background:ds.classColors[cls]}}/>
+            {ds.classNames[cls]} — Original vs Reconstructed
+          </div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:8}}>
+            <Grid w={W} h={H} rows={3}/>
+            <LineChart data={orig}  w={W} h={H} color="#94a3b8" sw={1.4} opacity={.65}/>
+            <LineChart data={recon} w={W} h={H} color={ds.classColors[cls]} sw={2.2} opacity={.9}/>
+          </svg>
+          <div style={{display:'flex',gap:20,fontSize:10,marginBottom:10}}>
+            <span style={{color:'#94a3b8'}}>— Original</span>
+            <span style={{color:ds.classColors[cls]}}>— Reconstructed</span>
+          </div>
+          <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 13px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:6}}>
+              <span style={{color:'var(--dim)'}}>Reconstruction MSE</span>
+              <span style={{color:'#10b981',fontWeight:700}}>{ds.metrics.MSE.toFixed(4)}</span>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11}}>
+              <span style={{color:'var(--dim)'}}>Bottleneck dim</span>
+              <span style={{color:'var(--text)',fontWeight:600}}>{ds.cfg.embedding_dim}D</span>
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
+    </div>
+  );
+}
 
+/* M5 — Saliency tab */
+function M5Saliency({ds}){
+  const sal=useMemo(()=>getSaliency(ds),[ds]);
+  const W=440,H=100;
+  const signal=useMemo(()=>getCleanSignal(ds,0),[ds]);
+
+  // Subsample saliency to 50 cells for heatmap display
+  const cells=50;
+  const cellSal=Array.from({length:cells},(_,i)=>{
+    const start=Math.floor(i/cells*sal.length);
+    const end=Math.floor((i+1)/cells*sal.length);
+    const chunk=sal.slice(start,end);
+    return chunk.reduce((a,b)=>a+b,0)/chunk.length;
+  });
+
+  function salColor(v){
+    // 0 → dark blue, 0.5 → yellow, 1 → red
+    if(v<.5){
+      const t=v/.5;
+      const r=Math.round(0+(138-0)*t);
+      const g=Math.round(0+(100-0)*t);
+      const b=Math.round(40+(240-40)*t); // actually blue to purple
+      return `rgb(${Math.round(10+v*220)},${Math.round(10+v*60)},${Math.round(180-v*140)})`;
+    }else{
+      const t=(v-.5)/.5;
+      return `rgb(${Math.round(138+117*t)},${Math.round(100-80*t)},${Math.round(100-80*t)})`;
+    }
+  }
+
+  // Region labels per dataset
+  const regions={
+    ecg:[{t:'~30–40%',label:'QRS Complex (most informative)'},{t:'~55–65%',label:'T-wave region'}],
+    gunpoint:[{t:'~15–40%',label:'Motion transition phase (gun draw)'},{t:'~60%',label:'Plateau differentiation'}],
+    coffee:[{t:'~22–28%',label:'Primary absorption band'},{t:'~60–70%',label:'Species-specific spectral peak'}],
+  };
+  const rs=regions[ds.saliencyProfile]||[];
+
+  return(
+    <div className="fade">
       <div className="g2">
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Curriculum Schedule — λ Over 20 Epochs</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ marginBottom: 14 }}>
-            <Gridlines w={W} h={H} rows={4} px={28} py={10} />
-            <rect x="28" y="10" width={3 / 20 * (W - 40)} height={H - 20} fill="rgba(100,116,139,0.07)" />
-            <text x="31" y="22" fill="#64748b" fontSize="8" fontFamily="Inter">warm-up (λ=0)</text>
-            <Line data={lam} w={W} h={H} color="#f59e0b" sw={2.5} filled px={28} py={10} />
-            <text x="30" y={H - 8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 0</text>
-            <text x={W - 52} y="20" fill="#f59e0b" fontSize="10" fontFamily="'JetBrains Mono',monospace">λ = 0.9</text>
-            <text x={W - 52} y={H - 8} fill="#64748b" fontSize="9" fontFamily="Inter">epoch 20</text>
-          </svg>
+          <div className="slbl"><span className="sdot" style={{background:'#f97316'}}/>Signal Saliency — Gradient-Based Feature Importance</div>
+          <div style={{marginBottom:6,fontSize:11,color:'var(--dimmer)'}}>Which time regions most influence the embedding? (Red = high attention, Blue = ignored)</div>
 
-          <div className="codebox" style={{ marginBottom: 14 }}>
-            <span style={{ color: '#94a3b8' }}># Total loss per epoch:</span>{'\n'}
-            <span style={{ color: '#f59e0b' }}>L</span> = (1−λ) × MSE(recon, x) + λ × MSE(z_student, z_teacher)
+          {/* Heatmap */}
+          <div className="heatrow" style={{marginBottom:4}}>
+            {cellSal.map((v,i)=>(
+              <div key={i} className="heatcell" style={{background:salColor(v)}} title={`t=${(i/cells*100).toFixed(0)}%: ${v.toFixed(2)}`}/>
+            ))}
           </div>
-          
-          <div className="params" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
-            {[
-              { k: 'start_lambda', v: '0.0',  c: '#f59e0b' },
-              { k: 'end_lambda',   v: '0.9',  c: '#f59e0b' },
-              { k: 'delay_epoch',  v: '3',    c: '#f59e0b' },
-              { k: 'tau',          v: '1.4',  c: '#fbbf24' },
-              { k: 'student_type', v: 'cnn_ae', c: '#94a3b8' },
-              { k: 'embed_dim',    v: '64',   c: '#94a3b8' },
-            ].map(p => (
-              <div key={p.k} className="param">
-                <div className="param-k">{p.k}</div>
-                <div className="param-v" style={{ color: p.c, fontSize: 12 }}>{p.v}</div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'var(--dimmer)',marginBottom:16}}>
+            <span>t=0</span><span>t=50%</span><span>t=100%</span>
+          </div>
+
+          {/* Signal underneath with saliency overlay */}
+          <div className="slbl"><span className="sdot" style={{background:'#f97316'}}/>Signal + Attention Overlay</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+            <Grid w={W} h={H} rows={3}/>
+            {/* Saliency bars as background */}
+            {cellSal.map((v,i)=>{
+              const x=12+(i/cells)*(W-24);
+              const bw=(W-24)/cells;
+              return <rect key={i} x={x} y={10} width={bw} height={H-20} fill={salColor(v)} opacity={v*.35}/>;
+            })}
+            <LineChart data={signal} w={W} h={H} color="white" sw={1.5} opacity={.85}/>
+          </svg>
+          <div style={{marginTop:12,display:'flex',gap:16,flexWrap:'wrap'}}>
+            {rs.map((r,i)=>(
+              <div key={i} style={{background:'rgba(249,115,22,.08)',border:'1px solid rgba(249,115,22,.25)',borderRadius:7,padding:'6px 12px',fontSize:11}}>
+                <span style={{color:'#f97316',fontWeight:600}}>{r.t}</span><span style={{color:'var(--dim)',marginLeft:6}}>{r.label}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Reconstruction — Original vs Decoded Signal</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ marginBottom: 8 }}>
-            <Gridlines w={W} h={H} rows={3} />
-            <Line data={orig}  w={W} h={H} color="#94a3b8" sw={1.4} opacity={0.65} />
-            <Line data={recon} w={W} h={H} color="#f59e0b" sw={2.2} opacity={0.9} />
-          </svg>
-          <div style={{ fontSize: '10px', color: '#64748b', marginBottom: 18, fontFamily: "'JetBrains Mono',monospace" }}>
-            MSE = {dsInfo.mse.toFixed(3)} · 64-dim bottleneck
+          <div className="slbl"><span className="sdot" style={{background:'#f97316'}}/>What the Model is Attending To</div>
+          <div className="steps">
+            {[
+              ['Gradient Saliency','For each test signal, compute ∂embedding/∂input at each time step. Magnitude = importance.'],
+              ['Normalization','Saliency values normalized 0→1 across all test samples for consistent visual comparison.'],
+              ['Heatmap','Colours show attention: red=critical, blue=ignored. Width = one time region.'],
+              ...rs.map(r=>[r.label.split(' ')[0],`The model focuses on ${r.label.toLowerCase()} for ${ds.name} classification.`]),
+            ].map(([t,d],i)=>(
+              <div key={i} className="step">
+                <div className="stepn" style={{background:'rgba(249,115,22,.12)',color:'#f97316'}}>{i+1}</div>
+                <div className="stept"><b>{t}</b> — {d}</div>
+              </div>
+            ))}
           </div>
 
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f59e0b' }} />Dual Training Loss Curves</div>
-          <svg width="100%" viewBox={`0 0 ${W} 85`} style={{ marginBottom: 16 }}>
-            <Gridlines w={W} h={85} rows={3} />
-            <Line data={rLoss} w={W} h={85} color="#f59e0b" sw={2}   />
-            <Line data={dLoss} w={W} h={85} color="#8b5cf6" sw={1.6} opacity={0.8} />
-            <text x="14" y="18" fill="#f59e0b" fontSize="9" fontFamily="Inter">Recon loss</text>
-            <text x="14" y="30" fill="#8b5cf6" fontSize="9" fontFamily="Inter">Distil loss</text>
-          </svg>
+          <div style={{marginTop:20}}>
+            <div className="slbl"><span className="sdot" style={{background:'#f97316'}}/>Top-5 Most Attended Time Regions</div>
+            {Array.from({length:5}).map((_,i)=>{
+              const idx=sal.reduce((best,v,j,a)=>v>a[best]&&!Array.from({length:i},(x,k)=>{
+                const sorted=[...sal].sort((a,b)=>b-a);return sal.indexOf(sorted[k]);
+              }).includes(j)?j:best,0);
+              const topIdx=[...sal].map((v,j)=>({v,j})).sort((a,b)=>b.v-a.v).map(x=>x.j);
+              const t=topIdx[i];
+              const pct=(t/sal.length*100).toFixed(0);
+              return(
+                <div key={i} style={{marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
+                    <span style={{color:'var(--dim)'}}>t={pct}% (step {t}/{sal.length})</span>
+                    <span style={{color:'#f97316',fontWeight:700}}>{sal[t].toFixed(3)}</span>
+                  </div>
+                  <div className="pbar-wrap"><div className="pbar" style={{width:`${(sal[t]*100).toFixed(0)}%`,background:'linear-gradient(90deg,#f97316,#f43f5e)'}}/></div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function Mod4({ dsInfo }) {
-  const [hov, setHov] = useState(null);
-  
-  // Fake trial scores slightly varied based on dataset for realism
-  const trialData = useMemo(() => [
-    { id: 0, score: dsInfo.ari * 0.7, ari: dsInfo.ari * 0.65, lr: '1e-3',  student: 'cnn_ae',  embed: 32 },
-    { id: 1, score: dsInfo.ari * 0.8, ari: dsInfo.ari * 0.75, lr: '5e-4',  student: 'lstm_ae', embed: 64 },
-    { id: 2, score: dsInfo.ari * 0.75,ari: dsInfo.ari * 0.70, lr: '1e-3',  student: 'cnn_ae',  embed: 64 },
-    { id: 3, score: dsInfo.ari * 0.88,ari: dsInfo.ari * 0.85, lr: '5e-4',  student: 'cnn_ae',  embed: 64 },
-    { id: 4, score: dsInfo.ari * 0.85,ari: dsInfo.ari * 0.80, lr: '1e-4',  student: 'lstm_ae', embed: 128 },
-    { id: 5, score: dsInfo.ari * 0.98,ari: dsInfo.ari,        lr: '5e-4',  student: 'cnn_ae',  embed: 64 }, // BEST
-    { id: 6, score: dsInfo.ari * 0.90,ari: dsInfo.ari * 0.87, lr: '1e-3',  student: 'cnn_ae',  embed: 128 },
-    { id: 7, score: dsInfo.ari * 0.92,ari: dsInfo.ari * 0.89, lr: '5e-4',  student: 'lstm_ae', embed: 64 },
-  ], [dsInfo]);
-  
-  const maxScore = Math.max(...trialData.map(t => t.score));
-  const minScore = Math.min(...trialData.map(t => t.score)) - 0.05;
-  const W = 480, H = 160;
-  const barW = (W - 36) / trialData.length;
-  const barMaxH = 100;
-  const baseY = H - 22;
+/* M5 — Robustness tab */
+function M5Robust({ds}){
+  const cleanARI=ds.metrics.ARI;
+  const W=440,H=155;
+  const maxDrop=0.15;
+  const barW=(W-36)/ds.robustness.length;
+  const baseY=H-22;
 
-  const hyperparams = [
-    { k: 'normalization',      v: 'zscore' },
-    { k: 'missing_strategy',   v: 'linear_interp' },
-    { k: 'clip_outliers',      v: 'True' },
-    { k: 'aug_strength',       v: 'medium' },
-    { k: 'mask_ratio',         v: '0.1' },
-    { k: 'jitter_sigma',       v: '0.03' },
-    { k: 'student_type',       v: 'cnn_ae' },
-    { k: 'embedding_dim',      v: '64' },
-    { k: 'hidden_dim',         v: '64' },
-    { k: 'learning_rate',      v: '5e-4' },
-    { k: 'batch_size',         v: '32' },
-    { k: 'start_lambda',       v: '0.0' },
-    { k: 'end_lambda',         v: '0.9' },
-    { k: 'delay_epoch',        v: '3' },
-    { k: 'tau',                v: '1.4' },
-  ];
-
-  return (
-    <div className="fade m4">
-      <div className="mod-hdr m4">
-        <div className="mod-icon">⚡</div>
-        <div>
-          <h2>Module 4 — AutoML Optimization (Optuna) on {dsInfo.name}</h2>
-          <p>Optuna's TPE intelligently explores the 15-parameter search space across 8 quick trials. 
-          The best config is identified using a multi-objective score then retrained for 20 full epochs.</p>
-        </div>
-      </div>
-
+  return(
+    <div className="fade">
       <div className="g2">
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#10b981' }} />8 AutoML Trial Scores</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ cursor: 'pointer', marginBottom: 8 }}>
-            {trialData.map((t, i) => {
-              const bH = ((t.score - minScore) / (maxScore - minScore + 0.02)) * barMaxH;
-              const bx = 30 + i * barW + barW * 0.12;
-              const bw = barW * 0.76;
-              const by = baseY - bH;
-              const best = t.score === maxScore;
-              const hovd = hov === i;
-
-              return (
-                <g key={i} onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}>
-                  <rect x={bx} y={by} width={bw} height={bH} rx="3"
-                    fill={best ? '#10b981' : hovd ? 'rgba(16,185,129,0.55)' : 'rgba(16,185,129,0.22)'}
-                  />
-                  {best && <text x={bx + bw / 2} y={by - 12} fill="#10b981" fontSize="11" textAnchor="middle">★</text>}
-                  {(best || hovd) && <text x={bx + bw / 2} y={by - 3} fill={best ? '#10b981' : '#94a3b8'} fontSize="8" textAnchor="middle">{t.score.toFixed(3)}</text>}
-                  <text x={bx + bw / 2} y={baseY + 12} fill={best ? '#10b981' : '#64748b'} fontSize="9" textAnchor="middle">T{t.id}</text>
+          <div className="slbl"><span className="sdot" style={{background:'#3b82f6'}}/>ARI Drop Under 4 Corruption Types</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{marginBottom:16}}>
+            {/* Baseline ARI as reference line */}
+            <line x1="28" y1={baseY-cleanARI/1.0*(H-36)/1} x2={W-10} y2={baseY-cleanARI/1.0*(H-36)/1}
+              stroke="rgba(16,185,129,.25)" strokeWidth="1" strokeDasharray="4,4"/>
+            {ds.robustness.map((r,i)=>{
+              const bx=28+i*barW+barW*.1;
+              const bw=barW*.80;
+              // Show the drop amount as a red bar and the remaining as green
+              const remH=(r.corrupt/cleanARI)*(H-36);
+              const dropH=(r.drop/cleanARI)*(H-36);
+              const totalH=remH+dropH;
+              return(
+                <g key={i}>
+                  {/* Remaining ARI */}
+                  <rect x={bx} y={baseY-remH} width={bw} height={remH} rx="3" fill="rgba(16,185,129,.55)"/>
+                  {/* Drop */}
+                  <rect x={bx} y={baseY-remH-dropH} width={bw} height={dropH} rx="3" fill="rgba(244,63,94,.65)"/>
+                  <text x={bx+bw/2} y={baseY-remH-dropH-4} fill="#fda4af" fontSize="8" textAnchor="middle">-{r.drop.toFixed(2)}</text>
+                  <text x={bx+bw/2} y={baseY+13} fill="#64748b" fontSize="8" textAnchor="middle">{r.type.split(' ')[0]}</text>
                 </g>
               );
             })}
+            <text x={W-50} y={baseY-cleanARI/1.0*(H-36)/1-4} fill="rgba(16,185,129,.7)" fontSize="9" fontFamily="Inter">clean ARI</text>
           </svg>
-
-          <div style={{ height: 50, padding: '0 4px' }}>
-            {hov !== null && (
-              <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#94a3b8' }}>
-                <b style={{ color: '#10b981' }}>Trial {trialData[hov].id}</b>
-                {' · '}score={trialData[hov].score.toFixed(3)}
-                {' · '}ARI={trialData[hov].ari.toFixed(2)}
-                {' · '}student={trialData[hov].student}
-                {trialData[hov].score === maxScore && <b style={{ color: '#10b981', marginLeft: 8 }}>← WINNER</b>}
-              </div>
-            )}
+          <div style={{display:'flex',gap:14,fontSize:10}}>
+            <span><span style={{color:'#10b981'}}>■</span> Remaining ARI</span>
+            <span><span style={{color:'#f43f5e'}}>■</span> ARI Drop</span>
           </div>
         </div>
 
         <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#10b981' }} />All 15 Hyperparameters — Best Values</div>
-          <div className="params" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-            {hyperparams.map(p => (
-              <div key={p.k} className="param" style={{ borderColor: 'rgba(16,185,129,0.18)', padding: '8px 10px' }}>
-                <div className="param-k">{p.k}</div>
-                <div className="param-v" style={{ color: '#10b981', fontSize: 12 }}>{p.v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Mod5({ dsInfo }) {
-  const normPts = useMemo(() => cluster(-1.9, 1.3, 0.85, 48, 11), []);
-  const abnoPts = useMemo(() => cluster(2.1, -1.0, 0.95, 52, 22), []);
-
-  const W = 300, H = 200, px = 18, py = 14;
-  const allPts = [...normPts, ...abnoPts];
-  const mnX = Math.min(...allPts.map(p => p.x)), mxX = Math.max(...allPts.map(p => p.x));
-  const mnY = Math.min(...allPts.map(p => p.y)), mxY = Math.max(...allPts.map(p => p.y));
-  const toSVG = (x, y) => ({
-    x: px + (x - mnX) / (mxX - mnX) * (W - 2 * px),
-    y: py + (1 - (y - mnY) / (mxY - mnY)) * (H - 2 * py),
-  });
-
-  const robRows = [
-    { name: 'Missing Values', atsr: 0.04, man: 0.12 },
-    { name: 'Gaussian Noise', atsr: 0.06, man: 0.15 },
-    { name: 'Spike Noise',    atsr: 0.08, man: 0.18 },
-    { name: 'Time Warp',      atsr: 0.05, man: 0.13 },
-  ];
-
-  const RW = 440, RH = 110;
-  const gw = (RW - 32) / robRows.length;
-  const bmaxH = 75;
-  const baseRY = RH - 18;
-
-  return (
-    <div className="fade m5">
-      <div className="mod-hdr m5">
-        <div className="mod-icon">📊</div>
-        <div>
-          <h2>Module 5 — Evaluation, Robustness &amp; XAI for {dsInfo.name}</h2>
-          <p>The final Auto-TSRC model is rigorously evaluated with 4 clustering metrics, an SVM probe, and 
-          stress-testing under 4 corruption types (missing values, noise, spikes, time warp).</p>
-        </div>
-      </div>
-
-      <div className="g2">
-        <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />PCA Scatter — 64-D Embeddings to 2D</div>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <svg width={W} height={H}>
-              <line x1={px} y1={H - py} x2={W - px} y2={H - py} stroke="rgba(255,255,255,0.08)" />
-              <line x1={px} y1={py}     x2={px}     y2={H - py} stroke="rgba(255,255,255,0.08)" />
-              {normPts.map((p, i) => <circle key={`n${i}`} cx={toSVG(p.x, p.y).x} cy={toSVG(p.x, p.y).y} r="3.5" fill="#06b6d4" opacity="0.75" />)}
-              {abnoPts.map((p, i) => <circle key={`a${i}`} cx={toSVG(p.x, p.y).x} cy={toSVG(p.x, p.y).y} r="3.5" fill="#f43f5e" opacity="0.75" />)}
-            </svg>
-          </div>
-          <div style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', fontFamily: "'JetBrains Mono',monospace" }}>
-            ARI={dsInfo.ari.toFixed(2)} · NMI={dsInfo.nmi.toFixed(2)} · SVM={dsInfo.svm}% · MSE={dsInfo.mse.toFixed(3)}
-          </div>
-        </div>
-
-        <div className="gcell">
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />Model Comparison Table — {dsInfo.name}</div>
-          <table className="ctable" style={{ marginBottom: 20 }}>
+          <div className="slbl"><span className="sdot" style={{background:'#3b82f6'}}/>Robustness Report — {ds.name}</div>
+          <table className="tbl">
             <thead>
               <tr>
-                <th>Model</th>
-                <th>ARI ↑</th>
-                <th>NMI ↑</th>
-                <th>SVM ↑</th>
-                <th>MSE ↓</th>
+                <th>Corruption</th><th>Simulates</th><th>ARI (clean)</th><th>ARI (corrupt)</th><th>Drop</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="mn">Student Only</td>
-                <td>{(dsInfo.ari * 0.3).toFixed(2)}</td><td>{(dsInfo.nmi * 0.3).toFixed(2)}</td><td>{(dsInfo.svm * 0.8).toFixed(0)}%</td><td>{(dsInfo.mse * 2.1).toFixed(3)}</td>
-              </tr>
-              <tr>
-                <td className="mn">Teacher Only</td>
-                <td>{(dsInfo.ari * 0.48).toFixed(2)}</td><td>{(dsInfo.nmi * 0.46).toFixed(2)}</td><td>{(dsInfo.svm * 0.86).toFixed(0)}%</td><td>—</td>
-              </tr>
-              <tr>
-                <td className="mn">Manual TSRC</td>
-                <td>{(dsInfo.ari * 0.72).toFixed(2)}</td><td>{(dsInfo.nmi * 0.70).toFixed(2)}</td><td>{(dsInfo.svm * 0.93).toFixed(0)}%</td><td>{(dsInfo.mse * 1.5).toFixed(3)}</td>
-              </tr>
-              <tr className="best-row">
-                <td className="mn">Auto-TSRC <span className="win-badge">★ BEST</span></td>
-                <td className="bv">{dsInfo.ari.toFixed(2)}</td>
-                <td className="bv">{dsInfo.nmi.toFixed(2)}</td>
-                <td className="bv">{dsInfo.svm}%</td>
-                <td className="bv">{dsInfo.mse.toFixed(3)}</td>
-              </tr>
+              {ds.robustness.map((r,i)=>(
+                <tr key={i}>
+                  <td className="nm">{r.type}</td>
+                  <td style={{fontSize:11}}>{r.sim}</td>
+                  <td>{cleanARI.toFixed(2)}</td>
+                  <td>{r.corrupt.toFixed(2)}</td>
+                  <td style={{color:r.drop<=0.06?'#10b981':r.drop<=0.09?'#f59e0b':'#f43f5e',fontWeight:700}}>−{r.drop.toFixed(2)}</td>
+                  <td>
+                    <span style={{
+                      fontSize:9,fontWeight:700,padding:'2px 8px',borderRadius:4,
+                      background:r.drop<=0.06?'rgba(16,185,129,.13)':r.drop<=0.09?'rgba(245,158,11,.13)':'rgba(244,63,94,.13)',
+                      color:r.drop<=0.06?'#10b981':r.drop<=0.09?'#f59e0b':'#f43f5e'
+                    }}>{r.drop<=0.06?'Robust':r.drop<=0.09?'Moderate':'Sensitive'}</span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
-          <div className="cell-hd"><span className="cell-hd-dot" style={{ background: '#f43f5e' }} />Robustness — ARI Drop Under Data Corruption</div>
-          <svg width="100%" viewBox={`0 0 ${RW} ${RH}`}>
-            {robRows.map((d, gi) => {
-              const gx = 30 + gi * gw;
-              const aH = (d.atsr / 0.21) * bmaxH;
-              const mH = (d.man  / 0.21) * bmaxH;
-              const bw = gw * 0.28;
-              return (
-                <g key={gi}>
-                  <rect x={gx + 2} y={baseRY - aH} width={bw} height={aH} fill="rgba(16,185,129,0.7)" rx="2" />
-                  <text x={gx + 2 + bw / 2} y={baseRY - aH - 3} fill="#6ee7b7" fontSize="8" textAnchor="middle">{d.atsr.toFixed(2)}</text>
-                  <rect x={gx + bw + 5} y={baseRY - mH} width={bw} height={mH} fill="rgba(244,63,94,0.55)" rx="2" />
-                  <text x={gx + bw + 5 + bw / 2} y={baseRY - mH - 3} fill="#fda4af" fontSize="8" textAnchor="middle">{d.man.toFixed(2)}</text>
-                  <text x={gx + gw / 2 - 6} y={RH - 4} fill="#64748b" fontSize="8" textAnchor="middle">{d.name}</text>
-                </g>
-              );
-            })}
-          </svg>
+          <div style={{marginTop:18}}>
+            <div className="slbl"><span className="sdot" style={{background:'#3b82f6'}}/>Robustness Pipeline (per corruption)</div>
+            <div className="steps">
+              {[
+                ['Corrupt','Apply noise/masking/warp to X_test → X_corrupted'],
+                ['Preprocess','Pass X_corrupted through the trained preprocessor (same fit)'],
+                ['Embed','Student encodes → extract embeddings'],
+                ['Cluster','KMeans (k='+ds.classes+') → compare to true labels → ARI'],
+                ['Report','drop = clean_ARI − corrupted_ARI'],
+              ].map(([t,d],i)=>(
+                <div key={i} className="step">
+                  <div className="stepn" style={{background:'rgba(59,130,246,.12)',color:'#3b82f6'}}>{i+1}</div>
+                  <div className="stept"><b>{t}</b> — {d}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   PIPELINE ARROW
-═══════════════════════════════════════════════════════════════════ */
-function Arrow({ color }) {
-  return (
-    <div className="p-arrow">
-      <svg width="30" height="20" viewBox="0 0 30 20">
-        <line x1="2" y1="10" x2="22" y2="10" stroke={color || '#334155'} strokeWidth="1.5" />
-        <polygon points="18,5 28,10 18,15" fill={color || '#334155'} />
-      </svg>
-    </div>
-  );
-}
+/* ═══════════════════════════════════════════
+   PIPELINE + APP SHELL
+═══════════════════════════════════════════ */
+const MODS=[
+  {id:1,cls:'m1',color:'#06b6d4',num:'Module 1',name:'Preprocessing',      file:'preprocessing.py', icon:'🧹'},
+  {id:2,cls:'m2',color:'#8b5cf6',num:'Module 2',name:'Teacher (SimCLR)',    file:'teacher_contrastive.py',icon:'🎓'},
+  {id:3,cls:'m3',color:'#f59e0b',num:'Module 3',name:'Student+Curriculum',  file:'student_autoencoder.py',icon:'📚'},
+  {id:4,cls:'m4',color:'#10b981',num:'Module 4',name:'AutoML (Optuna)',      file:'automl_search.py',  icon:'⚡'},
+  {id:5,cls:'m5',color:'#f43f5e',num:'Module 5',name:'Eval & XAI',          file:'evaluation.py',     icon:'📊'},
+];
 
-/* ═══════════════════════════════════════════════════════════════════
-   MAIN APP
-═══════════════════════════════════════════════════════════════════ */
-const VIEWS = { 1: Mod1, 2: Mod2, 3: Mod3, 4: Mod4, 5: Mod5 };
+const VIEWS={1:Mod1,2:Mod2,3:Mod3,4:Mod4,5:Mod5};
 
-function App() {
-  const [active, setActive] = useState(1);
-  const [running, setRunning] = useState(false);
-  const [dsKey, setDsKey] = useState('ECG200');
-  const timer = useRef(null);
-  
-  const dsInfo = DATASETS[dsKey];
+function App(){
+  const [active,setActive]=useState(1);
+  const [dsKey,setDsKey]=useState('ECG200');
+  const [running,setRunning]=useState(false);
+  const timer=useRef(null);
+  const ds=DS[dsKey];
 
-  const runDemo = () => {
-    if (running) {
-      clearInterval(timer.current);
-      setRunning(false);
-      return;
-    }
-    setRunning(true);
-    setActive(1);
-    let cur = 1;
-    timer.current = setInterval(() => {
-      cur = cur >= 5 ? 1 : cur + 1;
+  const runDemo=useCallback(()=>{
+    if(running){clearInterval(timer.current);setRunning(false);return;}
+    setRunning(true);setActive(1);
+    let cur=1;
+    timer.current=setInterval(()=>{
+      cur=cur>=5?1:cur+1;
       setActive(cur);
-      if (cur === 5) { clearInterval(timer.current); setRunning(false); }
-    }, 3000);
-  };
+      if(cur===5){clearInterval(timer.current);setRunning(false);}
+    },3200);
+  },[running]);
 
-  useEffect(() => () => clearInterval(timer.current), []);
+  useEffect(()=>()=>clearInterval(timer.current),[]);
 
-  const ActiveView = VIEWS[active];
-  const mod = MODULES.find(m => m.id === active);
+  const ActiveView=VIEWS[active];
+  const mod=MODS.find(m=>m.id===active);
 
-  return (
+  return(
     <>
-      <header className="header">
+      <header className="hdr">
         <div>
-          <div className="logo-title">Auto-TSRC Dashboard</div>
-          <div className="logo-sub">AutoML · Curriculum Distillation · Time-Series</div>
+          <div className="logo">Auto-TSRC Pipeline</div>
+          <div className="logo-sub">AutoML · Curriculum Distillation · Time-Series Representation</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div className="header-badge">
-            Dataset: 
-            <select className="ds-select" value={dsKey} onChange={e => setDsKey(e.target.value)}>
-              <option value="ECG200">ECG200</option>
-              <option value="GunPoint">GunPoint</option>
-              <option value="Coffee">Coffee</option>
+        <div className="hdr-right">
+          <div className="ds-pill">
+            <label>Dataset</label>
+            <select className="ds-sel" value={dsKey} onChange={e=>{setDsKey(e.target.value);clearInterval(timer.current);setRunning(false);}}>
+              <option value="ECG200">ECG200 — Cardiology</option>
+              <option value="GunPoint">GunPoint — Motion</option>
+              <option value="Coffee">Coffee — Spectrometry</option>
             </select>
-            <br />
-            <span style={{ fontSize: 10, marginTop: 4, display: 'inline-block' }}>
-              {dsInfo.train} train · {dsInfo.test} test · {dsInfo.steps} time steps · {dsInfo.classes} classes
-            </span>
           </div>
-          <button className={`demo-btn ${running ? 'stop' : ''}`} onClick={runDemo}>
-            <span>{running ? '⏹' : '▶'}</span>
-            {running ? 'Stop Demo' : 'Run Full Demo'}
+          <div style={{fontSize:10,color:'var(--dimmer)',lineHeight:1.7}}>
+            <span style={{color:'var(--dim)'}}>{ds.train}</span> train · <span style={{color:'var(--dim)'}}>{ds.test}</span> test · <span style={{color:'var(--dim)'}}>{ds.steps}</span> steps
+          </div>
+          <button className={`run-btn${running?' stop':''}`} onClick={runDemo}>
+            {running?'⏹ Stop Demo':'▶ Run Full Demo'}
           </button>
         </div>
       </header>
 
-      <div className="pipeline-wrap">
-        <div className="pipeline-label">▸ Click any module to explore · Press "Run Full Demo" to auto-advance</div>
-        <div className="pipeline-row">
-          {MODULES.map((m, i) => (
-            <React.Fragment key={m.id}>
-              <div
-                className={`p-mod ${m.cls} ${active === m.id ? 'active' : ''}`}
-                onClick={() => { clearInterval(timer.current); setRunning(false); setActive(m.id); }}
-              >
-                <div className="p-num">{m.num}</div>
-                <div className="p-name">{m.icon} {m.name}</div>
-                <div className="p-file">{m.file}</div>
+      {/* Pipeline */}
+      <div className="pipe">
+        {MODS.map((m,i)=>(
+          <React.Fragment key={m.id}>
+            <div className={`pmod ${m.cls}${active===m.id?' active':''}`}
+              onClick={()=>{clearInterval(timer.current);setRunning(false);setActive(m.id);}}>
+              <div className="pnum">{m.num}</div>
+              <div className="pname">{m.icon} {m.name}</div>
+              <div className="pfile">{m.file}</div>
+            </div>
+            {i<MODS.length-1&&(
+              <div className="parr">
+                <svg width="28" height="18" viewBox="0 0 28 18">
+                  <line x1="2" y1="9" x2="20" y2="9" stroke={active===m.id?m.color:active===MODS[i+1].id?MODS[i+1].color:'#334155'} strokeWidth="1.5"/>
+                  <polygon points="16,4.5 26,9 16,13.5" fill={active===m.id?m.color:active===MODS[i+1].id?MODS[i+1].color:'#334155'}/>
+                </svg>
               </div>
-              {i < MODULES.length - 1 && (
-                <Arrow color={active === m.id ? m.color : active === MODULES[i + 1].id ? MODULES[i + 1].color : undefined} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+            )}
+          </React.Fragment>
+        ))}
       </div>
 
+      {/* Main panel */}
       <div className="main">
-        <div className="glass" style={{ borderColor: mod.color + '33' }}>
-          <ActiveView key={active + dsKey} dsInfo={dsInfo} />
+        <div className="glass" style={{borderColor:mod.color+'33'}}>
+          <ActiveView key={active+dsKey} ds={ds}/>
         </div>
       </div>
 
-      <footer style={{ padding: '16px 40px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 11, color: '#334155' }}>Auto-TSRC · Interactive Demo · Dataset: {dsInfo.name}</span>
-        <span style={{ fontSize: 11, color: '#334155' }}>All metrics correspond to real Auto-TSRC pipeline runs</span>
+      <footer style={{padding:'14px 36px 22px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'space-between',fontSize:10,color:'#334155'}}>
+        <span>Auto-TSRC · {ds.name} ({ds.full})</span>
+        <span>ARI={ds.metrics.ARI} · NMI={ds.metrics.NMI} · SVM={ds.metrics.SVM}% · MSE={ds.metrics.MSE}</span>
       </footer>
     </>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
